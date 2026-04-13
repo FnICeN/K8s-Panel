@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: k8s-panel
+    version: 1.0.0
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# springdoc-openapi项目配置
+springdoc:
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: com.ficn.panel.controller
