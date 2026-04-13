@@ -2,6 +2,8 @@ spring:
   application:
     name: k8s-panel
     version: 1.0.0
+  profiles:
+    active: local
 
 server:
   port: 8080
@@ -14,3 +16,15 @@ springdoc:
     - group: 'default'
       paths-to-match: '/**'
       packages-to-scan: com.ficn.panel.controller
+
+oidc:
+  issuer: http://localhost:8081/realms/auth-demo
+  client-id: k8s-auth
+  client-secret: xxx
+  scope: openid
+
+# Log
+logging:
+  charset:
+    console: UTF-8
+    file: UTF-8
