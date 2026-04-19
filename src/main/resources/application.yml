@@ -31,6 +31,9 @@ oidc:
   client-secret: xxx
   scope: openid
 
+cluster:
+  cluster-url: http://localhost:6443
+
 # Log
 logging:
   charset:

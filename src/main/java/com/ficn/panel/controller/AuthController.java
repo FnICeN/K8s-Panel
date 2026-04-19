@@ -1,16 +1,13 @@
 package com.ficn.panel.controller;
 
-import cn.hutool.core.util.StrUtil;
 import com.ficn.panel.common.BaseResponse;
 import com.ficn.panel.common.ResultUtils;
 import com.ficn.panel.exception.ErrorCode;
 import com.ficn.panel.exception.ThrowUtils;
 import com.ficn.panel.model.dto.auth.DeviceCodeResponse;
-import com.ficn.panel.model.dto.auth.PollTokenReceive;
 import com.ficn.panel.model.dto.auth.PollTokenResponse;
 import com.ficn.panel.model.dto.enums.AuthScopeEnum;
 import com.ficn.panel.service.auth.AuthService;
-import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
