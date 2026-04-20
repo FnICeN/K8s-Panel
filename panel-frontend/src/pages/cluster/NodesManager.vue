@@ -2,10 +2,10 @@
 import { getNodes } from '@/api/clusterController.ts'
 import { ref } from 'vue'
 
-const nodes = ref<API.Node[]>([])
+const nodes = ref<(API.Node | undefined)[]>([])
 getNodes().then((res) => {
   console.log(res.data.items)
-  nodes.value = res.data.items
+  nodes.value = res.data.items || []
 })
 </script>
 

@@ -1,4 +1,10 @@
 declare namespace API {
+  type BaseResponseBoolean = {
+    code?: number
+    data?: boolean
+    msg?: string
+  }
+
   type BaseResponseDeviceCodeResponse = {
     code?: number
     data?: DeviceCodeResponse

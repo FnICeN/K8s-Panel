@@ -10,6 +10,14 @@ export async function getDeviceCode(options?: { [key: string]: any }) {
   })
 }
 
+/** 此处后端没有提供注释 GET /auth/logout */
+export async function logout(options?: { [key: string]: any }) {
+  return request<API.BaseResponseBoolean>('/auth/logout', {
+    method: 'GET',
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 GET /auth/polltoken */
 export async function pollToken(options?: { [key: string]: any }) {
   return request<API.BaseResponsePollTokenResponse>('/auth/polltoken', {

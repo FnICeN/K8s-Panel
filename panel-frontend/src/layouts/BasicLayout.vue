@@ -5,7 +5,7 @@
         <h1 class="platform-name">天基云网安全管理平台</h1>
       </div>
       <div class="header-right">
-        <a-button type="primary">登录</a-button>
+        <a-button type="primary" @click="loginDialogRef?.open()">登录</a-button>
       </div>
     </a-layout-header>
     <a-layout>
@@ -29,6 +29,7 @@
         </a-layout-content>
       </a-layout>
     </a-layout>
+    <LoginDialog ref="loginDialogRef" />
   </a-layout>
 </template>
 
@@ -37,9 +38,18 @@ import { reactive, ref, watch, h, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { HomeOutlined, CheckCircleOutlined } from '@ant-design/icons-vue';
 import type { MenuProps, ItemType } from 'ant-design-vue';
+import LoginDialog from '@/components/LoginDialog.vue';
 
 const router = useRouter();
 const route = useRoute();
+const loginDialogRef = ref<InstanceType<typeof LoginDialog> | null>(null);
+
+// 全局登录对话框触发函数
+if (typeof window !== 'undefined') {
+  ;(window as any).showLoginDialog = () => {
+    loginDialogRef.value?.show();
+  };
+}
 
 const selectedKeys = ref<string[]>(['/']);
 const openKeys = ref<string[]>([]);
