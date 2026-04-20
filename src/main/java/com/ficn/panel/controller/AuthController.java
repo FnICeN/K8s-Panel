@@ -37,8 +37,9 @@ public class AuthController {
         // 获取token
         PollTokenResponse pollTokenResponse = authService.pollToken(deviceCode);
         ThrowUtils.throwIf(pollTokenResponse == null, ErrorCode.OPERATION_ERROR, "获取token失败");
-        // 保存id_token到session
+        // 保存id_token和access_token到session
         httpServletRequest.getSession().setAttribute("id_token", pollTokenResponse.getIdToken());
+        httpServletRequest.getSession().setAttribute("access_token", pollTokenResponse.getAccessToken());
         return ResultUtils.success(pollTokenResponse);
     }
 
