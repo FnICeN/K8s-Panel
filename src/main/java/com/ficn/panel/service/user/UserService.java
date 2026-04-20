@@ -6,4 +6,5 @@ import jakarta.servlet.http.HttpSession;
 
 public interface UserService {
     User getLoginUser(HttpServletRequest httpServletRequest);
+    boolean userLogout(HttpServletRequest request);
 }

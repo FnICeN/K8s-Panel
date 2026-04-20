@@ -7,15 +7,22 @@ import com.ficn.panel.exception.ThrowUtils;
 import com.ficn.panel.model.dto.auth.DeviceCodeResponse;
 import com.ficn.panel.model.dto.auth.PollTokenResponse;
 import com.ficn.panel.model.dto.enums.AuthScopeEnum;
+import com.ficn.panel.model.entity.User;
 import com.ficn.panel.service.auth.AuthService;
+import com.ficn.panel.service.user.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 
+import static com.ficn.panel.constant.UserConstant.USER_LOGIN_STATE;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    @Resource
+    private UserService userService;
     @Resource
     private AuthService authService;
 
@@ -37,10 +44,16 @@ public class AuthController {
         // 获取token
         PollTokenResponse pollTokenResponse = authService.pollToken(deviceCode);
         ThrowUtils.throwIf(pollTokenResponse == null, ErrorCode.OPERATION_ERROR, "获取token失败");
-        // 保存id_token和access_token到session
-        httpServletRequest.getSession().setAttribute("id_token", pollTokenResponse.getIdToken());
-        httpServletRequest.getSession().setAttribute("access_token", pollTokenResponse.getAccessToken());
+        // 保存User到session
+        User user = new User(pollTokenResponse.getAccessToken(), pollTokenResponse.getIdToken());
+        httpServletRequest.getSession().setAttribute(USER_LOGIN_STATE, user);
         return ResultUtils.success(pollTokenResponse);
+    }
+
+    @GetMapping("/logout")
+    public BaseResponse<Boolean> logout(HttpServletRequest request) {
+        boolean logout = userService.userLogout(request);
+        return ResultUtils.success(logout);
     }
 
 
