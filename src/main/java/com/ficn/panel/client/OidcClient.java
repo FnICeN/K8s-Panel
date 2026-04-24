@@ -44,6 +44,7 @@ public class OidcClient {
         try {
             deviceCodeResponse = restTemplate.postForObject(url, map, DeviceCodeResponse.class);
         } catch (RestClientException e) {
+            log.error(e.getMessage());
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取设备码认证地址失败");
         }
         ThrowUtils.throwIf(deviceCodeResponse == null, ErrorCode.SYSTEM_ERROR, "获取设备码失败");
