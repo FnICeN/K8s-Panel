@@ -1,6 +1,6 @@
 package com.ficn.panel.model.dto.cluster;
 
-import com.ficn.panel.model.entity.Node;
+import com.ficn.panel.model.entity.vo.NodeVO;
 import lombok.Data;
 
 import java.util.List;
@@ -9,5 +9,5 @@ import java.util.List;
 public class NodeListResponse {
     private String kind;
     private String apiVersion;
-    private List<Node> items;
+    private List<NodeVO> items;
 }

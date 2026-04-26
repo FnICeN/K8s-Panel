@@ -1,4 +1,21 @@
 declare namespace API {
+  type Address = {
+    type?: string
+    address?: string
+  }
+
+  type AddressVO = {
+    type?: string
+    address?: string
+  }
+
+  type Allocatable = {
+    cpu?: string
+    memory?: string
+    pods?: string
+    'ephemeral-storage'?: string
+  }
+
   type BaseResponseBoolean = {
     code?: number
     data?: boolean
@@ -8,6 +25,18 @@ declare namespace API {
   type BaseResponseDeviceCodeResponse = {
     code?: number
     data?: DeviceCodeResponse
+    msg?: string
+  }
+
+  type BaseResponseNodeListResponse = {
+    code?: number
+    data?: NodeListResponse
+    msg?: string
+  }
+
+  type BaseResponseNodeSpecResponse = {
+    code?: number
+    data?: NodeSpecResponse
     msg?: string
   }
 
@@ -23,6 +52,24 @@ declare namespace API {
     msg?: string
   }
 
+  type Capacity = {
+    cpu?: string
+    memory?: string
+    pods?: string
+    'ephemeral-storage'?: string
+  }
+
+  type Condition = {
+    type?: string
+    status?: string
+    message?: string
+  }
+
+  type ConditionVO = {
+    type?: string
+    status?: string
+  }
+
   type DeviceCodeResponse = {
     interval?: number
     device_code?: string
@@ -32,18 +79,75 @@ declare namespace API {
     expires_in?: number
   }
 
-  type Metadata = {
-    name?: string
+  type getNodeAllParams = {
+    node_name: string
   }
 
-  type Node = {
-    metadata?: Metadata
+  type getNodeParams = {
+    node_name: string
+  }
+
+  type MetadataVO = {
+    name?: string
+    creationTimestamp?: string
+    labels?: Record<string, any>
+  }
+
+  type NodeInfo = {
+    osImage?: string
+    kubeletVersion?: string
+    architecture?: string
+    kernelVersion?: string
+  }
+
+  type NodeInfoVO = {
+    kubeletVersion?: string
   }
 
   type NodeListResponse = {
     kind?: string
     apiVersion?: string
-    items?: Node[]
+    items?: NodeVO[]
+  }
+
+  type NodeSpec = {
+    podCIDR?: string
+  }
+
+  type NodeSpecResponse = {
+    kind?: string
+    apiVersion?: string
+    metadata?: ObjectMeta
+    spec?: NodeSpec
+    status?: NodeStatus
+  }
+
+  type NodeStatus = {
+    conditions?: Condition[]
+    addresses?: Address[]
+    capacity?: Capacity
+    allocatable?: Allocatable
+    nodeInfo?: NodeInfo
+  }
+
+  type NodeStatusVO = {
+    conditions?: ConditionVO[]
+    addresses?: AddressVO[]
+    nodeInfo?: NodeInfoVO
+  }
+
+  type NodeVO = {
+    metadata?: MetadataVO
+    status?: NodeStatusVO
+  }
+
+  type ObjectMeta = {
+    name?: string
+    uid?: string
+    creationTimestamp?: string
+    namespace?: string
+    labels?: Record<string, any>
+    annotations?: Record<string, any>
   }
 
   type PollTokenResponse = {

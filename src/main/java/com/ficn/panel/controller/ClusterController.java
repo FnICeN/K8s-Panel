@@ -1,16 +1,21 @@
 package com.ficn.panel.controller;
 
+import com.ficn.panel.common.BaseResponse;
+import com.ficn.panel.common.ResultUtils;
 import com.ficn.panel.exception.ErrorCode;
 import com.ficn.panel.exception.ThrowUtils;
 import com.ficn.panel.model.dto.cluster.NodeListResponse;
+import com.ficn.panel.model.dto.cluster.NodeSpecResponse;
 import com.ficn.panel.model.entity.User;
 import com.ficn.panel.service.cluster.NodeService;
 import com.ficn.panel.service.user.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/cluster")
@@ -22,11 +27,32 @@ public class ClusterController {
     private NodeService nodeService;
 
     @GetMapping("/nodes")
-    public NodeListResponse getNodes(HttpServletRequest request) {
+    @Operation(summary = "获取所有节点")
+    public BaseResponse<NodeListResponse> getNodes(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         NodeListResponse nodes = nodeService.getNodes(user.getIdToken());
         ThrowUtils.throwIf(nodes == null, ErrorCode.OPERATION_ERROR, "获取节点列表失败");
-        return nodes;
+        return ResultUtils.success(nodes);
+    }
+
+    @GetMapping(value = "/nodes/{node_name}", produces = "application/json", params = "!all")
+    @Operation(summary = "获取某个节点部分信息")
+    public BaseResponse<NodeSpecResponse> getNode(@PathVariable("node_name") String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        NodeSpecResponse nodeSpec = nodeService.getNodeSpec(user.getIdToken(), name);
+        ThrowUtils.throwIf(nodeSpec == null, ErrorCode.OPERATION_ERROR, "获取节点详情失败");
+        return ResultUtils.success(nodeSpec);
+    }
+
+    @GetMapping(value = "/nodes/{node_name}/all", produces = "application/json")
+    @Operation(summary = "获取某个节点全部信息，yaml形式")
+    public BaseResponse<String> getNodeAll(@PathVariable("node_name") String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String nodeAllSpec = nodeService.getNodeAllSpec(user.getIdToken(), name);
+        ThrowUtils.throwIf(nodeAllSpec == null, ErrorCode.OPERATION_ERROR, "获取节点详情失败");
+        return ResultUtils.success(nodeAllSpec);
     }
 }

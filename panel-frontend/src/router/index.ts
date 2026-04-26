@@ -23,6 +23,11 @@ const router = createRouter({
           name: 'nodes',
           component: () => import('../pages/cluster/NodesManager.vue'),
         },
+        {
+          path: 'nodes/:name',
+          name: 'nodeSpec',
+          component: () => import('../pages/cluster/NodeSpec.vue'),
+        },
       ],
     },
   ],
