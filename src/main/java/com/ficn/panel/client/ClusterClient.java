@@ -1,5 +1,6 @@
 package com.ficn.panel.client;
 
+import com.ficn.panel.model.dto.cluster.NamespacesListResponse;
 import com.ficn.panel.model.dto.cluster.NodeListResponse;
 import com.ficn.panel.model.dto.cluster.NodeSpecResponse;
 import lombok.AllArgsConstructor;
@@ -57,5 +58,16 @@ public class ClusterClient {
         String nodeAllSpec = restTemplate.exchange(
                 url, HttpMethod.GET, entity, String.class).getBody();
         return nodeAllSpec;
+    }
+
+
+    public NamespacesListResponse getNamespaces(String token) {
+        String url = clusterUrl + "/api/v1/namespaces";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        NamespacesListResponse namespaces = restTemplate.exchange(
+                url, HttpMethod.GET, entity, NamespacesListResponse.class).getBody();
+        return namespaces;
     }
 }
