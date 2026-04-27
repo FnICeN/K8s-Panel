@@ -3,11 +3,11 @@ package com.ficn.panel.client;
 import com.ficn.panel.model.dto.cluster.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
@@ -39,8 +39,14 @@ public class ClusterClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        NodeSpecResponse nodeSpec = restTemplate.exchange(
-                url, HttpMethod.GET, entity, NodeSpecResponse.class).getBody();
+        NodeSpecResponse nodeSpec = null;
+        try {
+            nodeSpec = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, NodeSpecResponse.class).getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            // 未找到资源，返回null，由控制层处理
+            return null;
+        }
         return nodeSpec;
     }
 
@@ -48,13 +54,18 @@ public class ClusterClient {
      * 获取集群 node 全部详情（yaml）
      */
     public String getNodeAllSpec(String token, String nodeName) {
-        String url = clusterUrl + "/api/v1/nodes/" + nodeName + "/all";
+        String url = clusterUrl + "/api/v1/nodes/" + nodeName;
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         headers.setAccept(Collections.singletonList(MediaType.valueOf("application/yaml")));
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        String nodeAllSpec = restTemplate.exchange(
-                url, HttpMethod.GET, entity, String.class).getBody();
+        String nodeAllSpec = null;
+        try {
+            nodeAllSpec = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, String.class).getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
+        }
         return nodeAllSpec;
     }
 
@@ -80,8 +91,13 @@ public class ClusterClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        PodListResponse pods = restTemplate.exchange(
-                url, HttpMethod.GET, entity, PodListResponse.class).getBody();
+        PodListResponse pods = null;
+        try {
+            pods = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, PodListResponse.class).getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
+        }
         return pods;
     }
 
@@ -90,8 +106,14 @@ public class ClusterClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        PodSpecResponse podSpec = restTemplate.exchange(
-                url, HttpMethod.GET, entity, PodSpecResponse.class).getBody();
+
+        PodSpecResponse podSpec = null;
+        try {
+            podSpec = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, PodSpecResponse.class).getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
+        }
         return podSpec;
     }
 }

@@ -44,7 +44,7 @@ public class ClusterController {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         NodeSpecResponse nodeSpec = nodeService.getNodeSpec(user.getIdToken(), name);
-        ThrowUtils.throwIf(nodeSpec == null, ErrorCode.OPERATION_ERROR, "获取节点详情失败");
+        ThrowUtils.throwIf(nodeSpec == null, ErrorCode.NOT_FOUND_ERROR, "获取节点详情失败，节点可能不存在");
         return ResultUtils.success(nodeSpec);
     }
 
@@ -54,7 +54,7 @@ public class ClusterController {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         String nodeAllSpec = nodeService.getNodeAllSpec(user.getIdToken(), name);
-        ThrowUtils.throwIf(nodeAllSpec == null, ErrorCode.OPERATION_ERROR, "获取节点详情失败");
+        ThrowUtils.throwIf(nodeAllSpec == null, ErrorCode.NOT_FOUND_ERROR, "获取节点详情失败，节点可能不存在");
         return ResultUtils.success(nodeAllSpec);
     }
 
@@ -74,7 +74,7 @@ public class ClusterController {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         PodListResponse pods = podService.getPods(user.getIdToken(), namespace);
-        ThrowUtils.throwIf(pods == null, ErrorCode.OPERATION_ERROR, "获取pod列表失败");
+        ThrowUtils.throwIf(pods == null, ErrorCode.NOT_FOUND_ERROR, "获取pod列表失败，命名空间可能不存在");
         return ResultUtils.success(pods);
     }
 
@@ -84,7 +84,7 @@ public class ClusterController {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         PodSpecResponse pod = podService.getPod(user.getIdToken(), namespace, name);
-        ThrowUtils.throwIf(pod == null, ErrorCode.OPERATION_ERROR, "获取pod详情失败");
+        ThrowUtils.throwIf(pod == null, ErrorCode.NOT_FOUND_ERROR, "获取pod详情失败，pod可能不存在");
         return ResultUtils.success(pod);
     }
 }
