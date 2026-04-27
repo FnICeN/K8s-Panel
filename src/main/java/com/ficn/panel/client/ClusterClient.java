@@ -15,7 +15,6 @@ import java.util.Collections;
 
 @Data
 @AllArgsConstructor
-@Slf4j
 public class ClusterClient {
     private String clusterUrl;
     private RestTemplate restTemplate;
@@ -25,14 +24,12 @@ public class ClusterClient {
      */
     public NodeListResponse getNodes(String token) {
         String url = clusterUrl + "/api/v1/nodes";
-        log.info("Cluster Client 获取节点列表请求URL: {}", url);
         // 设置Bearer token
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         HttpEntity<String> entity = new HttpEntity<>(headers);
         NodeListResponse nodes = restTemplate.exchange(
                 url, HttpMethod.GET, entity, NodeListResponse.class).getBody();
-        log.info("Cluster Client 获取节点列表响应: {}", nodes);
         return nodes;
     }
     /**
@@ -48,6 +45,9 @@ public class ClusterClient {
         return nodeSpec;
     }
 
+    /**
+     * 获取集群 node 全部详情（yaml）
+     */
     public String getNodeAllSpec(String token, String nodeName) {
         String url = clusterUrl + "/api/v1/nodes/" + nodeName + "/all";
         HttpHeaders headers = new HttpHeaders();
