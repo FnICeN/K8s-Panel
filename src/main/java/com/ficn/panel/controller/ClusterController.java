@@ -4,12 +4,11 @@ import com.ficn.panel.common.BaseResponse;
 import com.ficn.panel.common.ResultUtils;
 import com.ficn.panel.exception.ErrorCode;
 import com.ficn.panel.exception.ThrowUtils;
-import com.ficn.panel.model.dto.cluster.NamespacesListResponse;
-import com.ficn.panel.model.dto.cluster.NodeListResponse;
-import com.ficn.panel.model.dto.cluster.NodeSpecResponse;
+import com.ficn.panel.model.dto.cluster.*;
 import com.ficn.panel.model.entity.User;
 import com.ficn.panel.service.cluster.NamespaceService;
 import com.ficn.panel.service.cluster.NodeService;
+import com.ficn.panel.service.cluster.PodService;
 import com.ficn.panel.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
@@ -26,6 +25,8 @@ public class ClusterController {
     private NodeService nodeService;
     @Resource
     private NamespaceService NamespaceService;
+    @Resource
+    private PodService podService;
 
     @GetMapping("/nodes")
     @Operation(summary = "获取所有节点")
@@ -65,5 +66,25 @@ public class ClusterController {
         NamespacesListResponse namespaces = NamespaceService.getNamespaces(user.getIdToken());
         ThrowUtils.throwIf(namespaces == null, ErrorCode.OPERATION_ERROR, "获取命名空间列表失败");
         return ResultUtils.success(namespaces);
+    }
+
+    @GetMapping(value="/pods/{namespace}/all", produces = "application/json")
+    @Operation(summary = "获取某个命名空间下所有pod")
+    public BaseResponse<PodListResponse> getPodsAll(@PathVariable("namespace") String namespace, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        PodListResponse pods = podService.getPods(user.getIdToken(), namespace);
+        ThrowUtils.throwIf(pods == null, ErrorCode.OPERATION_ERROR, "获取pod列表失败");
+        return ResultUtils.success(pods);
+    }
+
+    @GetMapping(value="/pods/{namespace}/{pod_name}", produces = "application/json")
+    @Operation(summary = "获取某个pod")
+    public BaseResponse<PodSpecResponse> getPod(@PathVariable("namespace") String namespace, @PathVariable("pod_name") String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        PodSpecResponse pod = podService.getPod(user.getIdToken(), namespace, name);
+        ThrowUtils.throwIf(pod == null, ErrorCode.OPERATION_ERROR, "获取pod详情失败");
+        return ResultUtils.success(pod);
     }
 }

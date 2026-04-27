@@ -1,8 +1,6 @@
 package com.ficn.panel.client;
 
-import com.ficn.panel.model.dto.cluster.NamespacesListResponse;
-import com.ficn.panel.model.dto.cluster.NodeListResponse;
-import com.ficn.panel.model.dto.cluster.NodeSpecResponse;
+import com.ficn.panel.model.dto.cluster.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +59,9 @@ public class ClusterClient {
     }
 
 
+    /**
+     * 获取集群 namespace 列表
+     */
     public NamespacesListResponse getNamespaces(String token) {
         String url = clusterUrl + "/api/v1/namespaces";
         HttpHeaders headers = new HttpHeaders();
@@ -69,5 +70,28 @@ public class ClusterClient {
         NamespacesListResponse namespaces = restTemplate.exchange(
                 url, HttpMethod.GET, entity, NamespacesListResponse.class).getBody();
         return namespaces;
+    }
+
+    /**
+     * 获取命名空间 pod 列表
+     */
+    public PodListResponse getPods(String token, String namespace) {
+        String url = clusterUrl + "/api/v1/namespaces/" + namespace + "/pods";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        PodListResponse pods = restTemplate.exchange(
+                url, HttpMethod.GET, entity, PodListResponse.class).getBody();
+        return pods;
+    }
+
+    public PodSpecResponse getPod(String token, String namespace, String podName) {
+        String url = clusterUrl + "/api/v1/namespaces/" + namespace + "/pods/" + podName;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        PodSpecResponse podSpec = restTemplate.exchange(
+                url, HttpMethod.GET, entity, PodSpecResponse.class).getBody();
+        return podSpec;
     }
 }
