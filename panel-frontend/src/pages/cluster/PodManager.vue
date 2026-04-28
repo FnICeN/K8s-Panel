@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { getNamespaces, getPodsAll } from '@/api/clusterController.ts'
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 const pods = ref<(API.PodVO | undefined)[]>([])
 const namespaces = ref<string[]>([])
 const selectedNamespace = ref<string>('')
@@ -20,7 +21,13 @@ const loadNamespaces = async () => {
         .map((ns) => ns.metadata?.name)
         .filter((name): name is string => !!name)
       if (namespaces.value.length > 0) {
-        selectedNamespace.value = namespaces.value[4]
+        // 优先使用路由参数中的 namespace
+        const namespaceFromQuery = route.query.namespace as string
+        if (namespaceFromQuery && namespaces.value.includes(namespaceFromQuery)) {
+          selectedNamespace.value = namespaceFromQuery
+        } else {
+          selectedNamespace.value = namespaces.value[0]
+        }
         loadPods()
       }
     }

@@ -38,6 +38,11 @@ const router = createRouter({
           name: 'podSpec',
           component: () => import('../pages/cluster/PodSpec.vue'),
         },
+        {
+          path: 'namespaces',
+          name: 'namespaces',
+          component: () => import('../pages/cluster/NamespaceManager.vue'),
+        },
       ],
     },
   ],
