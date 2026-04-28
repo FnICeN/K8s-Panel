@@ -2,7 +2,7 @@
   <a-layout class="basic-layout">
     <a-layout-header class="header">
       <div class="header-left">
-        <h1 class="platform-name">天基云网安全管理平台</h1>
+        <h1 class="platform-name">天基云网安全集控平台</h1>
         <a-breadcrumb class="breadcrumb" separator=">">
           <a-breadcrumb-item v-for="(item, index) in breadcrumbItems" :key="index">
             <router-link v-if="item.path" :to="item.path">{{ item.title }}</router-link>
@@ -143,6 +143,12 @@ function updateBreadcrumb(path: string) {
   } else if (path.startsWith('/pods')) {
     items.push({ title: '集群管理', path: '/' })
     items.push({ title: 'Pod管理', path: '/pods' })
+
+    // 处理Pod详情页
+    const match = path.match(/\/pods\/([^/]+)\/(.*)/)
+    if (match && match[2]) {
+      items.push({ title: match[2] })
+    }
   } else if (path.startsWith('/namespaces')) {
     items.push({ title: '集群管理', path: '/' })
     items.push({ title: '命名空间管理', path: '/namespaces' })

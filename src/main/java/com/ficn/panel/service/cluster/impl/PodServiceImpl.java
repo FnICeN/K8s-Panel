@@ -25,4 +25,11 @@ public class PodServiceImpl implements PodService {
         PodSpecResponse pod = clusterClient.getPod(token, namespace, podName);
         return pod;
     }
+
+    @Override
+    public String getPodAllSpec(String token, String namespace, String podName) {
+        ClusterClient clusterClient = clusterClientFactory.getClusterClient(token);
+        String podAllSpec = clusterClient.getPodAllSpec(token, namespace, podName);
+        return podAllSpec;
+    }
 }

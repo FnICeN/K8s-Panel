@@ -8,4 +8,6 @@ public interface PodService {
     PodListResponse getPods(String token, String namespace);
 
     PodSpecResponse getPod(String token, String namespace, String podName);
+
+    String getPodAllSpec(String token, String namespace, String podName);
 }

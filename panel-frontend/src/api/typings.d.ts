@@ -28,6 +28,12 @@ declare namespace API {
     msg?: string
   }
 
+  type BaseResponseNamespacesListResponse = {
+    code?: number
+    data?: NamespacesListResponse
+    msg?: string
+  }
+
   type BaseResponseNodeListResponse = {
     code?: number
     data?: NodeListResponse
@@ -37,6 +43,18 @@ declare namespace API {
   type BaseResponseNodeSpecResponse = {
     code?: number
     data?: NodeSpecResponse
+    msg?: string
+  }
+
+  type BaseResponsePodListResponse = {
+    code?: number
+    data?: PodListResponse
+    msg?: string
+  }
+
+  type BaseResponsePodSpecResponse = {
+    code?: number
+    data?: PodSpecResponse
     msg?: string
   }
 
@@ -70,6 +88,24 @@ declare namespace API {
     status?: string
   }
 
+  type Container = {
+    name?: string
+    image?: string
+    args?: string[]
+    ports?: Port[]
+  }
+
+  type ContainerStatus = {
+    ready?: boolean
+    restartCount?: number
+    state?: Record<string, any>
+  }
+
+  type ContainerStatusVO = {
+    ready?: boolean
+    restartCount?: number
+  }
+
   type DeviceCodeResponse = {
     interval?: number
     device_code?: string
@@ -87,10 +123,35 @@ declare namespace API {
     node_name: string
   }
 
+  type getPodAllParams = {
+    namespace: string
+    pod_name: string
+  }
+
+  type getPodParams = {
+    namespace: string
+    pod_name: string
+  }
+
+  type getPodsAllParams = {
+    namespace: string
+  }
+
   type MetadataVO = {
     name?: string
     creationTimestamp?: string
-    labels?: Record<string, any>
+    namespace?: string
+  }
+
+  type NamespacesListResponse = {
+    kind?: string
+    apiVersion?: string
+    items?: NamespaceVO[]
+  }
+
+  type NamespaceVO = {
+    metadata?: MetadataVO
+    status?: StatusVO
   }
 
   type NodeInfo = {
@@ -150,6 +211,39 @@ declare namespace API {
     annotations?: Record<string, any>
   }
 
+  type PodListResponse = {
+    kind?: string
+    apiVersion?: string
+    items?: PodVO[]
+  }
+
+  type PodSpec = {
+    nodeName?: string
+    containers?: Container[]
+  }
+
+  type PodSpecResponse = {
+    kind?: string
+    apiVersion?: string
+    metadata?: ObjectMeta
+    spec?: PodSpec
+    status?: PodStatus
+  }
+
+  type PodStatus = {
+    phase?: string
+    containerStatuses?: ContainerStatus[]
+    hostIP?: string
+    podIP?: string
+    startTime?: string
+  }
+
+  type PodVO = {
+    metadata?: MetadataVO
+    spec?: SpecVO
+    status?: StatusVO
+  }
+
   type PollTokenResponse = {
     scope?: string
     access_token?: string
@@ -160,5 +254,21 @@ declare namespace API {
     id_token?: string
     'not-before-policy'?: number
     session_state?: string
+  }
+
+  type Port = {
+    name?: string
+    containerPort?: number
+    protocol?: string
+  }
+
+  type SpecVO = {
+    nodeName?: string
+  }
+
+  type StatusVO = {
+    phase?: string
+    containerStatuses?: ContainerStatusVO[]
+    podIP?: string
   }
 }

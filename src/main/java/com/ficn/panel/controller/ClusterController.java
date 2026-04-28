@@ -68,7 +68,7 @@ public class ClusterController {
         return ResultUtils.success(namespaces);
     }
 
-    @GetMapping(value="/pods/{namespace}/all", produces = "application/json")
+    @GetMapping(value="/pods/{namespace}", produces = "application/json")
     @Operation(summary = "获取某个命名空间下所有pod")
     public BaseResponse<PodListResponse> getPodsAll(@PathVariable("namespace") String namespace, HttpServletRequest request) {
         User user = userService.getLoginUser(request);
@@ -86,5 +86,15 @@ public class ClusterController {
         PodSpecResponse pod = podService.getPod(user.getIdToken(), namespace, name);
         ThrowUtils.throwIf(pod == null, ErrorCode.NOT_FOUND_ERROR, "获取pod详情失败，pod可能不存在");
         return ResultUtils.success(pod);
+    }
+
+    @GetMapping(value="/pods/{namespace}/{pod_name}/all", produces = "application/json")
+    @Operation(summary = "获取某个pod全部信息，yaml形式")
+    public BaseResponse<String> getPodAll(@PathVariable("namespace") String namespace, @PathVariable("pod_name") String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String podAllSpec = podService.getPodAllSpec(user.getIdToken(), namespace, name);
+        ThrowUtils.throwIf(podAllSpec == null, ErrorCode.NOT_FOUND_ERROR, "获取pod详情失败，pod可能不存在");
+        return ResultUtils.success(podAllSpec);
     }
 }

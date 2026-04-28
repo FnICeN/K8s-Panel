@@ -101,6 +101,9 @@ public class ClusterClient {
         return pods;
     }
 
+    /**
+     * 获取命名空间 pod 详情
+     */
     public PodSpecResponse getPod(String token, String namespace, String podName) {
         String url = clusterUrl + "/api/v1/namespaces/" + namespace + "/pods/" + podName;
         HttpHeaders headers = new HttpHeaders();
@@ -115,5 +118,24 @@ public class ClusterClient {
             return null;
         }
         return podSpec;
+    }
+
+    /**
+     * 获取 pod 全部详情（yaml）
+     */
+    public String getPodAllSpec(String token, String namespace, String podName) {
+        String url = clusterUrl + "/api/v1/namespaces/" + namespace + "/pods/" + podName;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setAccept(Collections.singletonList(MediaType.valueOf("application/yaml")));
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        String podAllSpec = null;
+        try {
+            podAllSpec = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, String.class).getBody();
+        } catch (HttpClientErrorException.NotFound e) {
+            return null;
+        }
+        return podAllSpec;
     }
 }

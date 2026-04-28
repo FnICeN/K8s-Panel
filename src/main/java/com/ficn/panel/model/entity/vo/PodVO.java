@@ -14,6 +14,7 @@ public class PodVO {
     public static class MetadataVO {
         private String name;
         private String creationTimestamp;
+        private String namespace;
     }
 
     @Data
