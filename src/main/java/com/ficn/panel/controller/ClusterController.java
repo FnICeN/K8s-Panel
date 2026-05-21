@@ -9,9 +9,11 @@ import com.ficn.panel.model.entity.User;
 import com.ficn.panel.model.entity.vo.NamespaceVO;
 import com.ficn.panel.model.entity.vo.NodeVO;
 import com.ficn.panel.model.entity.vo.PodVO;
+import com.ficn.panel.model.entity.vo.ServiceVO;
 import com.ficn.panel.service.cluster.NamespaceService;
 import com.ficn.panel.service.cluster.NodeService;
 import com.ficn.panel.service.cluster.PodService;
+import com.ficn.panel.service.cluster.ServiceService;
 import com.ficn.panel.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
@@ -30,6 +32,8 @@ public class ClusterController {
     private NamespaceService NamespaceService;
     @Resource
     private PodService podService;
+    @Resource
+    private ServiceService serviceService;
 
     @GetMapping("/nodes")
     @Operation(summary = "获取所有节点")
@@ -99,5 +103,44 @@ public class ClusterController {
         String podAllSpec = podService.getPodAllSpec(user.getIdToken(), namespace, name);
         ThrowUtils.throwIf(podAllSpec == null, ErrorCode.NOT_FOUND_ERROR, "获取pod详情失败，pod可能不存在");
         return ResultUtils.success(podAllSpec);
+    }
+
+    @GetMapping(value="/services/{namespace}", produces = "application/json")
+    @Operation(summary = "获取某个命名空间下所有service")
+    public BaseResponse<K8sListResponse<ServiceVO>> getServicesAll(@PathVariable("namespace") String namespace, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        K8sListResponse<ServiceVO> services = serviceService.getServices(user.getIdToken(), namespace);
+        ThrowUtils.throwIf(services == null, ErrorCode.NOT_FOUND_ERROR, "获取service列表失败，命名空间可能不存在");
+        return ResultUtils.success(services);
+    }
+
+    @GetMapping(value="/services/{namespace}/{service_name}", produces = "application/json")
+    @Operation(summary = "获取某个service")
+    public BaseResponse<ServiceSpecResponse> getService(@PathVariable("namespace") String namespace, @PathVariable("service_name") String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        ServiceSpecResponse service = serviceService.getService(user.getIdToken(), namespace, name);
+        ThrowUtils.throwIf(service == null, ErrorCode.NOT_FOUND_ERROR, "获取service详情失败，service可能不存在");
+        return ResultUtils.success(service);
+    }
+
+    @GetMapping(value="/services/{namespace}/{service_name}/all", produces = "application/json")
+    @Operation(summary = "获取某个service全部信息，yaml形式")
+    public BaseResponse<String> getServiceAll(@PathVariable("namespace") String namespace, @PathVariable("service_name") String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String serviceAllSpec = serviceService.getServiceAllSpec(user.getIdToken(), namespace, name);
+        ThrowUtils.throwIf(serviceAllSpec == null, ErrorCode.NOT_FOUND_ERROR, "获取service详情失败，service可能不存在");
+        return ResultUtils.success(serviceAllSpec);
+    }
+
+    @DeleteMapping(value="/services/{namespace}/{service_name}", produces = "application/json")
+    @Operation(summary = "删除某个service")
+    public BaseResponse<Boolean> deleteService(@PathVariable("namespace") String namespace, @PathVariable("service_name") String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        serviceService.deleteService(user.getIdToken(), namespace, name);
+        return ResultUtils.success(true);
     }
 }

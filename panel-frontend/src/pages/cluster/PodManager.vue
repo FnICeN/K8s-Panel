@@ -26,7 +26,7 @@ const loadNamespaces = async () => {
         if (namespaceFromQuery && namespaces.value.includes(namespaceFromQuery)) {
           selectedNamespace.value = namespaceFromQuery
         } else {
-          selectedNamespace.value = namespaces.value[0]
+          selectedNamespace.value = namespaces.value[0]!
         }
         loadPods()
       }

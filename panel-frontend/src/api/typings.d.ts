@@ -28,27 +28,33 @@ declare namespace API {
     msg?: string
   }
 
-  type BaseResponseNamespacesListResponse = {
+  type BaseResponseK8sListResponseNamespaceVO = {
     code?: number
-    data?: NamespacesListResponse
+    data?: K8sListResponseNamespaceVO
     msg?: string
   }
 
-  type BaseResponseNodeListResponse = {
+  type BaseResponseK8sListResponseNodeVO = {
     code?: number
-    data?: NodeListResponse
+    data?: K8sListResponseNodeVO
+    msg?: string
+  }
+
+  type BaseResponseK8sListResponsePodVO = {
+    code?: number
+    data?: K8sListResponsePodVO
+    msg?: string
+  }
+
+  type BaseResponseK8sListResponseServiceVO = {
+    code?: number
+    data?: K8sListResponseServiceVO
     msg?: string
   }
 
   type BaseResponseNodeSpecResponse = {
     code?: number
     data?: NodeSpecResponse
-    msg?: string
-  }
-
-  type BaseResponsePodListResponse = {
-    code?: number
-    data?: PodListResponse
     msg?: string
   }
 
@@ -61,6 +67,12 @@ declare namespace API {
   type BaseResponsePollTokenResponse = {
     code?: number
     data?: PollTokenResponse
+    msg?: string
+  }
+
+  type BaseResponseServiceSpecResponse = {
+    code?: number
+    data?: ServiceSpecResponse
     msg?: string
   }
 
@@ -101,9 +113,9 @@ declare namespace API {
     state?: Record<string, any>
   }
 
-  type ContainerStatusVO = {
-    ready?: boolean
-    restartCount?: number
+  type deleteServiceParams = {
+    namespace: string
+    service_name: string
   }
 
   type DeviceCodeResponse = {
@@ -137,16 +149,69 @@ declare namespace API {
     namespace: string
   }
 
-  type MetadataVO = {
-    name?: string
-    creationTimestamp?: string
-    namespace?: string
+  type getServiceAllParams = {
+    namespace: string
+    service_name: string
   }
 
-  type NamespacesListResponse = {
+  type getServiceParams = {
+    namespace: string
+    service_name: string
+  }
+
+  type getServicesAllParams = {
+    namespace: string
+  }
+
+  type K8sListResponseNamespaceVO = {
     kind?: string
     apiVersion?: string
     items?: NamespaceVO[]
+  }
+
+  type K8sListResponseNodeVO = {
+    kind?: string
+    apiVersion?: string
+    items?: NodeVO[]
+  }
+
+  type K8sListResponsePodVO = {
+    kind?: string
+    apiVersion?: string
+    items?: PodVO[]
+  }
+
+  type K8sListResponseServiceVO = {
+    kind?: string
+    apiVersion?: string
+    items?: ServiceVO[]
+  }
+
+  type LoadBalancerIngress = {
+    ip?: string
+    hostname?: string
+    ipMode?: string
+    ports?: PortStatus[]
+  }
+
+  type LoadBalancerIngressVO = {
+    ip?: string
+    hostname?: string
+  }
+
+  type LoadBalancerStatus = {
+    ingress?: LoadBalancerIngress[]
+  }
+
+  type LoadBalancerStatusVO = {
+    ingress?: LoadBalancerIngressVO[]
+  }
+
+  type MetadataVO = {
+    name?: string
+    namespace?: string
+    creationTimestamp?: string
+    labels?: Record<string, any>
   }
 
   type NamespaceVO = {
@@ -163,12 +228,6 @@ declare namespace API {
 
   type NodeInfoVO = {
     kubeletVersion?: string
-  }
-
-  type NodeListResponse = {
-    kind?: string
-    apiVersion?: string
-    items?: NodeVO[]
   }
 
   type NodeSpec = {
@@ -209,12 +268,6 @@ declare namespace API {
     namespace?: string
     labels?: Record<string, any>
     annotations?: Record<string, any>
-  }
-
-  type PodListResponse = {
-    kind?: string
-    apiVersion?: string
-    items?: PodVO[]
   }
 
   type PodSpec = {
@@ -262,13 +315,77 @@ declare namespace API {
     protocol?: string
   }
 
+  type PortStatus = {
+    port?: number
+    protocol?: string
+    error?: string
+  }
+
+  type ServicePort = {
+    name?: string
+    protocol?: string
+    port?: number
+    targetPort?: Record<string, any>
+    nodePort?: number
+    appProtocol?: string
+  }
+
+  type ServicePortVO = {
+    name?: string
+    protocol?: string
+    port?: number
+    targetPort?: Record<string, any>
+    nodePort?: number
+  }
+
+  type ServiceSpec = {
+    type?: string
+    clusterIP?: string
+    clusterIPs?: string[]
+    externalIPs?: string[]
+    loadBalancerIP?: string
+    loadBalancerSourceRanges?: string[]
+    loadBalancerClass?: string
+    ports?: ServicePort[]
+    selector?: Record<string, any>
+    sessionAffinity?: string
+    externalName?: string
+    externalTrafficPolicy?: string
+    internalTrafficPolicy?: string
+  }
+
+  type ServiceSpecResponse = {
+    kind?: string
+    apiVersion?: string
+    metadata?: ObjectMeta
+    spec?: ServiceSpec
+    status?: ServiceStatus
+  }
+
+  type ServiceStatus = {
+    loadBalancer?: LoadBalancerStatus
+  }
+
+  type ServiceVO = {
+    metadata?: MetadataVO
+    spec?: SpecVO
+    status?: StatusVO
+  }
+
   type SpecVO = {
     nodeName?: string
+    type?: string
+    clusterIP?: string
+    externalIPs?: string[]
+    loadBalancerIP?: string
+    externalName?: string
+    ports?: ServicePortVO[]
   }
 
   type StatusVO = {
     phase?: string
-    containerStatuses?: ContainerStatusVO[]
+    containerStatuses?: ContainerStatus[]
     podIP?: string
+    loadBalancer?: LoadBalancerStatusVO
   }
 }

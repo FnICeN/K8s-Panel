@@ -27,6 +27,14 @@ final class K8sApiPaths {
         return namespacePods(namespace) + "/" + encodeRequired(podName, "podName");
     }
 
+    static String namespaceServices(String namespace) {
+        return "/api/v1/namespaces/" + encodeRequired(namespace, "namespace") + "/services";
+    }
+
+    static String service(String namespace, String serviceName) {
+        return namespaceServices(namespace) + "/" + encodeRequired(serviceName, "serviceName");
+    }
+
     private static String encodeRequired(String value, String name) {
         if (!StringUtils.hasText(value)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, name + " must not be blank");

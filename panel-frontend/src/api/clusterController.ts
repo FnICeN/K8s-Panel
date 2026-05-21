@@ -4,7 +4,7 @@ import request from '@/request'
 
 /** 获取所有命名空间 GET /cluster/namespaces */
 export async function getNamespaces(options?: { [key: string]: any }) {
-  return request<API.BaseResponseNamespacesListResponse>('/cluster/namespaces', {
+  return request<API.BaseResponseK8sListResponseNamespaceVO>('/cluster/namespaces', {
     method: 'GET',
     ...(options || {}),
   })
@@ -12,7 +12,7 @@ export async function getNamespaces(options?: { [key: string]: any }) {
 
 /** 获取所有节点 GET /cluster/nodes */
 export async function getNodes(options?: { [key: string]: any }) {
-  return request<API.BaseResponseNodeListResponse>('/cluster/nodes', {
+  return request<API.BaseResponseK8sListResponseNodeVO>('/cluster/nodes', {
     method: 'GET',
     ...(options || {}),
   })
@@ -53,7 +53,7 @@ export async function getPodsAll(
   options?: { [key: string]: any }
 ) {
   const { namespace: param0, ...queryParams } = params
-  return request<API.BaseResponsePodListResponse>(`/cluster/pods/${param0}`, {
+  return request<API.BaseResponseK8sListResponsePodVO>(`/cluster/pods/${param0}`, {
     method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
@@ -82,6 +82,62 @@ export async function getPodAll(
 ) {
   const { namespace: param0, pod_name: param1, ...queryParams } = params
   return request<API.BaseResponseString>(`/cluster/pods/${param0}/${param1}/all`, {
+    method: 'GET',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 获取某个命名空间下所有service GET /cluster/services/${param0} */
+export async function getServicesAll(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getServicesAllParams,
+  options?: { [key: string]: any }
+) {
+  const { namespace: param0, ...queryParams } = params
+  return request<API.BaseResponseK8sListResponseServiceVO>(`/cluster/services/${param0}`, {
+    method: 'GET',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 获取某个service GET /cluster/services/${param0}/${param1} */
+export async function getService(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getServiceParams,
+  options?: { [key: string]: any }
+) {
+  const { namespace: param0, service_name: param1, ...queryParams } = params
+  return request<API.BaseResponseServiceSpecResponse>(`/cluster/services/${param0}/${param1}`, {
+    method: 'GET',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 删除某个service DELETE /cluster/services/${param0}/${param1} */
+export async function deleteService(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.deleteServiceParams,
+  options?: { [key: string]: any }
+) {
+  const { namespace: param0, service_name: param1, ...queryParams } = params
+  return request<API.BaseResponseBoolean>(`/cluster/services/${param0}/${param1}`, {
+    method: 'DELETE',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 获取某个service全部信息，yaml形式 GET /cluster/services/${param0}/${param1}/all */
+export async function getServiceAll(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getServiceAllParams,
+  options?: { [key: string]: any }
+) {
+  const { namespace: param0, service_name: param1, ...queryParams } = params
+  return request<API.BaseResponseString>(`/cluster/services/${param0}/${param1}/all`, {
     method: 'GET',
     params: { ...queryParams },
     ...(options || {}),
