@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import java.security.MessageDigest;
 import java.time.Duration;
 
+@Deprecated
 @Slf4j
 @Configuration
 public class ClusterClientFactory {

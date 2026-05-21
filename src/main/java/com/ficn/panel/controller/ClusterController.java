@@ -6,6 +6,9 @@ import com.ficn.panel.exception.ErrorCode;
 import com.ficn.panel.exception.ThrowUtils;
 import com.ficn.panel.model.dto.cluster.*;
 import com.ficn.panel.model.entity.User;
+import com.ficn.panel.model.entity.vo.NamespaceVO;
+import com.ficn.panel.model.entity.vo.NodeVO;
+import com.ficn.panel.model.entity.vo.PodVO;
 import com.ficn.panel.service.cluster.NamespaceService;
 import com.ficn.panel.service.cluster.NodeService;
 import com.ficn.panel.service.cluster.PodService;
@@ -30,10 +33,10 @@ public class ClusterController {
 
     @GetMapping("/nodes")
     @Operation(summary = "获取所有节点")
-    public BaseResponse<NodeListResponse> getNodes(HttpServletRequest request) {
+    public BaseResponse<K8sListResponse<NodeVO>> getNodes(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
-        NodeListResponse nodes = nodeService.getNodes(user.getIdToken());
+        K8sListResponse<NodeVO> nodes = nodeService.getNodes(user.getIdToken());
         ThrowUtils.throwIf(nodes == null, ErrorCode.OPERATION_ERROR, "获取节点列表失败");
         return ResultUtils.success(nodes);
     }
@@ -60,20 +63,20 @@ public class ClusterController {
 
     @GetMapping(value="/namespaces", produces = "application/json")
     @Operation(summary = "获取所有命名空间")
-    public BaseResponse<NamespacesListResponse> getNamespaces(HttpServletRequest request) {
+    public BaseResponse<K8sListResponse<NamespaceVO>> getNamespaces(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
-        NamespacesListResponse namespaces = NamespaceService.getNamespaces(user.getIdToken());
+        K8sListResponse<NamespaceVO> namespaces = NamespaceService.getNamespaces(user.getIdToken());
         ThrowUtils.throwIf(namespaces == null, ErrorCode.OPERATION_ERROR, "获取命名空间列表失败");
         return ResultUtils.success(namespaces);
     }
 
     @GetMapping(value="/pods/{namespace}", produces = "application/json")
     @Operation(summary = "获取某个命名空间下所有pod")
-    public BaseResponse<PodListResponse> getPodsAll(@PathVariable("namespace") String namespace, HttpServletRequest request) {
+    public BaseResponse<K8sListResponse<PodVO>> getPodsAll(@PathVariable("namespace") String namespace, HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
-        PodListResponse pods = podService.getPods(user.getIdToken(), namespace);
+        K8sListResponse<PodVO> pods = podService.getPods(user.getIdToken(), namespace);
         ThrowUtils.throwIf(pods == null, ErrorCode.NOT_FOUND_ERROR, "获取pod列表失败，命名空间可能不存在");
         return ResultUtils.success(pods);
     }

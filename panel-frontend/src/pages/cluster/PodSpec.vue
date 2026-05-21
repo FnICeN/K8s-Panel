@@ -55,6 +55,7 @@ onMounted(() => {
 
 const handleRefresh = () => {
   loadPodData()
+  loadYamlData()
 }
 
 const getPodStatusColor = (pod: API.PodSpecResponse) => {

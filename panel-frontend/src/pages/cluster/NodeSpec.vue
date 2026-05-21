@@ -39,6 +39,7 @@ onMounted(() => {
 // 操作按钮处理函数
 const handleRefresh = () => {
   loadNodeData()
+  loadYamlData()
 }
 
 const handleDescribe = () => {
@@ -78,7 +79,7 @@ const getNodeRole = (node: API.NodeSpecResponse) => {
 
 const loadYamlData = async () => {
   if (yamlContent.value && !yamlLoading.value) return
-  
+
   try {
     yamlLoading.value = true
     const response = await getNodeAll({ node_name: nodeName.value })

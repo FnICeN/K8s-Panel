@@ -1,14 +1,12 @@
 package com.ficn.panel.model.dto.cluster;
 
-import com.ficn.panel.model.entity.vo.NodeVO;
 import lombok.Data;
 
 import java.util.List;
 
-@Deprecated
 @Data
-public class NodeListResponse {
+public class K8sListResponse<T> {
     private String kind;
     private String apiVersion;
-    private List<NodeVO> items;
+    private List<T> items;
 }

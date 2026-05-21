@@ -1,9 +1,9 @@
 package com.ficn.panel.service.cluster.impl;
 
-import com.ficn.panel.client.ClusterClient;
-import com.ficn.panel.client.ClusterClientFactory;
-import com.ficn.panel.model.dto.cluster.PodListResponse;
+import com.ficn.panel.client.k8s.PodApi;
+import com.ficn.panel.model.dto.cluster.K8sListResponse;
 import com.ficn.panel.model.dto.cluster.PodSpecResponse;
+import com.ficn.panel.model.entity.vo.PodVO;
 import com.ficn.panel.service.cluster.PodService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -11,25 +11,20 @@ import org.springframework.stereotype.Service;
 @Service
 public class PodServiceImpl implements PodService {
     @Resource
-    private ClusterClientFactory clusterClientFactory;
+    private PodApi podApi;
+
     @Override
-    public PodListResponse getPods(String token, String namespace) {
-        ClusterClient clusterClient = clusterClientFactory.getClusterClient(token);
-        PodListResponse pods = clusterClient.getPods(token, namespace);
-        return pods;
+    public K8sListResponse<PodVO> getPods(String token, String namespace) {
+        return podApi.listByNamespace(token, namespace);
     }
 
     @Override
     public PodSpecResponse getPod(String token, String namespace, String podName) {
-        ClusterClient clusterClient = clusterClientFactory.getClusterClient(token);
-        PodSpecResponse pod = clusterClient.getPod(token, namespace, podName);
-        return pod;
+        return podApi.get(token, namespace, podName);
     }
 
     @Override
     public String getPodAllSpec(String token, String namespace, String podName) {
-        ClusterClient clusterClient = clusterClientFactory.getClusterClient(token);
-        String podAllSpec = clusterClient.getPodAllSpec(token, namespace, podName);
-        return podAllSpec;
+        return podApi.getYaml(token, namespace, podName);
     }
 }

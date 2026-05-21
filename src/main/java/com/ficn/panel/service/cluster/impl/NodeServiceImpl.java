@@ -1,10 +1,9 @@
 package com.ficn.panel.service.cluster.impl;
 
-import com.ficn.panel.client.ClusterClient;
-import com.ficn.panel.client.ClusterClientFactory;
-import com.ficn.panel.config.ClusterPropertiesConfig;
-import com.ficn.panel.model.dto.cluster.NodeListResponse;
+import com.ficn.panel.client.k8s.NodeApi;
+import com.ficn.panel.model.dto.cluster.K8sListResponse;
 import com.ficn.panel.model.dto.cluster.NodeSpecResponse;
+import com.ficn.panel.model.entity.vo.NodeVO;
 import com.ficn.panel.service.cluster.NodeService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -12,26 +11,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class NodeServiceImpl implements NodeService {
     @Resource
-    private ClusterClientFactory clusterClientFactory;
+    private NodeApi nodeApi;
+
     @Override
-    public NodeListResponse getNodes(String token) {
-        ClusterClient clusterClient = clusterClientFactory.getClusterClient(token);
-        NodeListResponse nodesResponse = clusterClient.getNodes(token);
-        return nodesResponse;
+    public K8sListResponse<NodeVO> getNodes(String token) {
+        return nodeApi.list(token);
     }
 
     @Override
     public NodeSpecResponse getNodeSpec(String token, String nodeName) {
-        ClusterClient clusterClient = clusterClientFactory.getClusterClient(token);
-        NodeSpecResponse nodeSpecResponse = clusterClient.getNode(token, nodeName);
-        return nodeSpecResponse;
+        return nodeApi.get(token, nodeName);
     }
 
     @Override
     public String getNodeAllSpec(String token, String nodeName) {
-        ClusterClient clusterClient = clusterClientFactory.getClusterClient(token);
-        String res = clusterClient.getNodeAllSpec(token, nodeName);
-        return res;
+        return nodeApi.getYaml(token, nodeName);
     }
 
 }
