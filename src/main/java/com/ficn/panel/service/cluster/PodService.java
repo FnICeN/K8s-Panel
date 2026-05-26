@@ -9,5 +9,7 @@ public interface PodService {
 
     PodSpecResponse getPod(String token, String namespace, String podName);
 
+    PodSpecResponse createPod(String token, String yaml);
+
     String getPodAllSpec(String token, String namespace, String podName);
 }

@@ -42,8 +42,10 @@ const getNodeVersion = (node: API.NodeVO) => {
   return node.status?.nodeInfo?.kubeletVersion || ''
 }
 
+type NodeMetadata = API.MetadataVO & { labels?: Record<string, any> }
+
 const getNodeRole = (node: API.NodeVO) => {
-  const labels = node.metadata?.labels
+  const labels = (node.metadata as NodeMetadata | undefined)?.labels
   if (labels && 'node-role.kubernetes.io/control-plane' in labels) {
     return 'control-plane'
   } else {

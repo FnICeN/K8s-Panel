@@ -11,6 +11,14 @@
         </a-breadcrumb>
       </div>
       <div class="header-right">
+        <a-tooltip title="创建资源">
+          <a-button
+            class="create-button"
+            shape="circle"
+            :icon="h(PlusOutlined)"
+            @click="createResourceDialogRef?.open()"
+          />
+        </a-tooltip>
         <a-button type="primary" @click="loginDialogRef?.open()">登录</a-button>
       </div>
     </a-layout-header>
@@ -36,19 +44,22 @@
       </a-layout>
     </a-layout>
     <LoginDialog ref="loginDialogRef" />
+    <CreateResourceDialog ref="createResourceDialogRef" />
   </a-layout>
 </template>
 
 <script setup lang="ts">
 import { reactive, ref, watch, h, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { HomeOutlined, CheckCircleOutlined } from '@ant-design/icons-vue'
+import { HomeOutlined, CheckCircleOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import type { MenuProps, ItemType } from 'ant-design-vue'
 import LoginDialog from '@/components/LoginDialog.vue'
+import CreateResourceDialog from '@/components/CreateResourceDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
 const loginDialogRef = ref<InstanceType<typeof LoginDialog> | null>(null)
+const createResourceDialogRef = ref<InstanceType<typeof CreateResourceDialog> | null>(null)
 
 // 全局登录对话框触发函数
 if (typeof window !== 'undefined') {
@@ -218,6 +229,20 @@ function updateBreadcrumb(path: string) {
 .header-right {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.create-button {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.create-button:hover,
+.create-button:focus {
+  border-color: #69b1ff;
+  background: #1677ff;
+  color: #fff;
 }
 
 .logo {

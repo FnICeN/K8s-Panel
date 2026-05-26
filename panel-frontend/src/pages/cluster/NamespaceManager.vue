@@ -23,13 +23,19 @@ const handleNamespaceClick = (namespace: API.NamespaceVO) => {
   if (namespace.metadata?.name) {
     router.push({
       path: '/pods',
-      query: { namespace: namespace.metadata.name }
+      query: { namespace: namespace.metadata.name },
     })
   }
 }
 
+type NamespaceStatus = API.StatusVO & { phase?: string }
+
+const getNamespacePhase = (namespace: API.NamespaceVO) => {
+  return (namespace.status as NamespaceStatus | undefined)?.phase
+}
+
 const getNamespaceStatusColor = (namespace: API.NamespaceVO) => {
-  const phase = namespace.status?.phase
+  const phase = getNamespacePhase(namespace)
   switch (phase) {
     case 'Active':
       return 'green'
@@ -53,7 +59,7 @@ const getNamespaceStatusColor = (namespace: API.NamespaceVO) => {
       <a-table-column title="状态" key="status">
         <template #default="{ record }">
           <a-tag :color="getNamespaceStatusColor(record)">
-            {{ record.status?.phase || '-' }}
+            {{ getNamespacePhase(record) || '-' }}
           </a-tag>
         </template>
       </a-table-column>

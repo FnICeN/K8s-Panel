@@ -52,8 +52,22 @@ const handlePodClick = (pod: API.PodVO) => {
   }
 }
 
+type PodListStatus = API.StatusVO & Pick<API.PodStatus, 'phase' | 'containerStatuses' | 'podIP'>
+
+const getPodStatus = (pod: API.PodVO) => {
+  return pod.status as PodListStatus | undefined
+}
+
+const getPodPhase = (pod: API.PodVO) => {
+  return getPodStatus(pod)?.phase
+}
+
+const getPodIP = (pod: API.PodVO) => {
+  return getPodStatus(pod)?.podIP
+}
+
 const getPodStatusColor = (pod: API.PodVO) => {
-  const phase = pod.status?.phase
+  const phase = getPodPhase(pod)
   switch (phase) {
     case 'Running':
       return 'green'
@@ -69,7 +83,7 @@ const getPodStatusColor = (pod: API.PodVO) => {
 }
 
 const getReadyContainers = (pod: API.PodVO) => {
-  const containerStatuses = pod.status?.containerStatuses
+  const containerStatuses = getPodStatus(pod)?.containerStatuses
   if (!containerStatuses) return '0 / 0'
   const ready = containerStatuses.filter((c) => c.ready).length
   const total = containerStatuses.length
@@ -77,7 +91,7 @@ const getReadyContainers = (pod: API.PodVO) => {
 }
 
 const getRestartCount = (pod: API.PodVO) => {
-  const containerStatuses = pod.status?.containerStatuses
+  const containerStatuses = getPodStatus(pod)?.containerStatuses
   if (!containerStatuses) return 0
   return containerStatuses.reduce((sum, c) => sum + (c.restartCount || 0), 0)
 }
@@ -112,7 +126,7 @@ const getRestartCount = (pod: API.PodVO) => {
       <a-table-column title="状态" key="status">
         <template #default="{ record }">
           <a-tag :color="getPodStatusColor(record)">
-            {{ record.status?.phase || '-' }}
+            {{ getPodPhase(record) || '-' }}
           </a-tag>
         </template>
       </a-table-column>
@@ -123,7 +137,7 @@ const getRestartCount = (pod: API.PodVO) => {
       </a-table-column>
       <a-table-column title="IP" key="ip">
         <template #default="{ record }">
-          {{ record.status?.podIP || '-' }}
+          {{ getPodIP(record) || '-' }}
         </template>
       </a-table-column>
       <a-table-column title="节点" key="node">

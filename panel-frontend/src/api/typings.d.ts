@@ -22,9 +22,27 @@ declare namespace API {
     msg?: string
   }
 
+  type BaseResponseDeploymentSpecResponse = {
+    code?: number
+    data?: DeploymentSpecResponse
+    msg?: string
+  }
+
   type BaseResponseDeviceCodeResponse = {
     code?: number
     data?: DeviceCodeResponse
+    msg?: string
+  }
+
+  type BaseResponseK8sListResponseDeploymentVO = {
+    code?: number
+    data?: K8sListResponseDeploymentVO
+    msg?: string
+  }
+
+  type BaseResponseK8sListResponseEventVO = {
+    code?: number
+    data?: K8sListResponseEventVO
     msg?: string
   }
 
@@ -113,9 +131,68 @@ declare namespace API {
     state?: Record<string, any>
   }
 
+  type CreatePodRequest = {
+    yaml?: string
+  }
+
+  type deleteDeploymentParams = {
+    namespace: string
+    deployment_name: string
+  }
+
   type deleteServiceParams = {
     namespace: string
     service_name: string
+  }
+
+  type DeploymentCondition = {
+    type?: string
+    status?: string
+    lastUpdateTime?: string
+    lastTransitionTime?: string
+    reason?: string
+    message?: string
+  }
+
+  type DeploymentSpec = {
+    replicas?: number
+    selector?: LabelSelector
+    strategy?: DeploymentStrategy
+    template?: PodTemplateSpec
+    minReadySeconds?: number
+    revisionHistoryLimit?: number
+    progressDeadlineSeconds?: number
+    paused?: boolean
+  }
+
+  type DeploymentSpecResponse = {
+    kind?: string
+    apiVersion?: string
+    metadata?: ObjectMeta
+    spec?: DeploymentSpec
+    status?: DeploymentStatus
+  }
+
+  type DeploymentStatus = {
+    observedGeneration?: number
+    replicas?: number
+    updatedReplicas?: number
+    readyReplicas?: number
+    availableReplicas?: number
+    unavailableReplicas?: number
+    collisionCount?: number
+    conditions?: DeploymentCondition[]
+  }
+
+  type DeploymentStrategy = {
+    type?: string
+    rollingUpdate?: Record<string, any>
+  }
+
+  type DeploymentVO = {
+    metadata?: MetadataVO
+    spec?: SpecVO
+    status?: StatusVO
   }
 
   type DeviceCodeResponse = {
@@ -125,6 +202,50 @@ declare namespace API {
     verification_uri?: string
     verification_uri_complete?: string
     expires_in?: number
+  }
+
+  type EventVO = {
+    metadata?: MetadataVO
+    type?: string
+    reason?: string
+    message?: string
+    count?: number
+    firstTimestamp?: string
+    lastTimestamp?: string
+    eventTime?: string
+    involvedObject?: InvolvedObjectVO
+  }
+
+  type getDeploymentAllParams = {
+    namespace: string
+    deployment_name: string
+  }
+
+  type getDeploymentEventsParams = {
+    namespace: string
+    deployment_name: string
+  }
+
+  type getDeploymentLogParams = {
+    namespace: string
+    deployment_name: string
+    podName: string
+    container?: string
+    tailLines?: number
+  }
+
+  type getDeploymentParams = {
+    namespace: string
+    deployment_name: string
+  }
+
+  type getDeploymentPodsParams = {
+    namespace: string
+    deployment_name: string
+  }
+
+  type getDeploymentsByNamespaceParams = {
+    namespace: string
   }
 
   type getNodeAllParams = {
@@ -163,6 +284,28 @@ declare namespace API {
     namespace: string
   }
 
+  type InvolvedObjectVO = {
+    kind?: string
+    namespace?: string
+    name?: string
+    uid?: string
+    apiVersion?: string
+    resourceVersion?: string
+    fieldPath?: string
+  }
+
+  type K8sListResponseDeploymentVO = {
+    kind?: string
+    apiVersion?: string
+    items?: DeploymentVO[]
+  }
+
+  type K8sListResponseEventVO = {
+    kind?: string
+    apiVersion?: string
+    items?: EventVO[]
+  }
+
   type K8sListResponseNamespaceVO = {
     kind?: string
     apiVersion?: string
@@ -185,6 +328,17 @@ declare namespace API {
     kind?: string
     apiVersion?: string
     items?: ServiceVO[]
+  }
+
+  type LabelSelector = {
+    matchLabels?: Record<string, any>
+    matchExpressions?: LabelSelectorRequirement[]
+  }
+
+  type LabelSelectorRequirement = {
+    key?: string
+    operator?: string
+    values?: string[]
   }
 
   type LoadBalancerIngress = {
@@ -211,7 +365,6 @@ declare namespace API {
     name?: string
     namespace?: string
     creationTimestamp?: string
-    labels?: Record<string, any>
   }
 
   type NamespaceVO = {
@@ -289,6 +442,24 @@ declare namespace API {
     hostIP?: string
     podIP?: string
     startTime?: string
+  }
+
+  type PodTemplateSpec = {
+    metadata?: ObjectMeta
+    spec?: PodTemplateSpecSpec
+  }
+
+  type PodTemplateSpecSpec = {
+    initContainers?: Container[]
+    containers?: Container[]
+    volumes?: Record<string, any>[]
+    restartPolicy?: string
+    serviceAccountName?: string
+    imagePullSecrets?: Record<string, any>[]
+    securityContext?: Record<string, any>
+    affinity?: Record<string, any>
+    nodeSelector?: Record<string, any>
+    tolerations?: Record<string, any>[]
   }
 
   type PodVO = {
@@ -373,7 +544,6 @@ declare namespace API {
   }
 
   type SpecVO = {
-    nodeName?: string
     type?: string
     clusterIP?: string
     externalIPs?: string[]
@@ -383,9 +553,6 @@ declare namespace API {
   }
 
   type StatusVO = {
-    phase?: string
-    containerStatuses?: ContainerStatus[]
-    podIP?: string
     loadBalancer?: LoadBalancerStatusVO
   }
 }
