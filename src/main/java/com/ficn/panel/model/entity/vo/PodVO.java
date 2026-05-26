@@ -27,6 +27,8 @@ public class PodVO {
         private String phase;
         private List<ContainerStatusVO> containerStatuses;
         private String podIP;
+        private String cpu;
+        private String memory;
         @Data
         public static class ContainerStatusVO {
             private Boolean ready;

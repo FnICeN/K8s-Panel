@@ -10,6 +10,8 @@ public interface K8sHttpClient {
 
     String getYaml(String token, String path);
 
+    String getText(String token, String path);
+
     <T> T post(String token, String path, Object body, Class<T> responseType);
 
     <T> T put(String token, String path, Object body, Class<T> responseType);

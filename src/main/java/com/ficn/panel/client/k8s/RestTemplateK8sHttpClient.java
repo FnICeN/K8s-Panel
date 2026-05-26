@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.util.Collections;
 
 @Component
@@ -43,6 +44,11 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
     }
 
     @Override
+    public String getText(String token, String path) {
+        return exchange(token, path, HttpMethod.GET, null, String.class, MediaType.ALL);
+    }
+
+    @Override
     public <T> T post(String token, String path, Object body, Class<T> responseType) {
         return exchange(token, path, HttpMethod.POST, body, responseType, MediaType.APPLICATION_JSON);
     }
@@ -60,7 +66,7 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
     private <T> T exchange(String token, String path, HttpMethod method, Object body, Class<T> responseType,
                           MediaType accept) {
         try {
-            return restTemplate.exchange(buildUrl(path), method, buildEntity(token, body, accept), responseType)
+            return restTemplate.exchange(URI.create(buildUrl(path)), method, buildEntity(token, body, accept), responseType)
                     .getBody();
         } catch (HttpClientErrorException.NotFound e) {
             return null;
@@ -72,7 +78,7 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
     private <T> T exchange(String token, String path, HttpMethod method, Object body,
                           ParameterizedTypeReference<T> responseType, MediaType accept) {
         try {
-            return restTemplate.exchange(buildUrl(path), method, buildEntity(token, body, accept), responseType)
+            return restTemplate.exchange(URI.create(buildUrl(path)), method, buildEntity(token, body, accept), responseType)
                     .getBody();
         } catch (HttpClientErrorException.NotFound e) {
             return null;
@@ -91,8 +97,10 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
         if (e instanceof ResourceAccessException) {
             return new BusinessException(ErrorCode.OPERATION_ERROR, "Unable to connect Kubernetes API server");
         }
-        if (e instanceof RestClientResponseException) {
-            return new BusinessException(ErrorCode.OPERATION_ERROR, "Kubernetes API request failed");
+        if (e instanceof RestClientResponseException restClientResponseException) {
+            return new BusinessException(ErrorCode.OPERATION_ERROR, "Kubernetes API request failed: "
+                    + restClientResponseException.getStatusCode() + " "
+                    + restClientResponseException.getResponseBodyAsString());
         }
         return new BusinessException(ErrorCode.OPERATION_ERROR, "Kubernetes API response processing failed");
     }
