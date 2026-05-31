@@ -2,16 +2,37 @@ package com.ficn.panel.exception;
 
 import com.ficn.panel.common.BaseResponse;
 import com.ficn.panel.common.ResultUtils;
+import com.ficn.panel.model.dto.auth.gatekeeper.GatekeeperReauthResponse;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpClientErrorException;
 
+import static com.ficn.panel.constant.UserConstant.REQUIRED_AUTH_SCOPE;
+import static com.ficn.panel.constant.UserConstant.USER_LOGIN_STATE;
+
 @Hidden
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+    @ExceptionHandler(GatekeeperReauthRequiredException.class)
+    public BaseResponse<GatekeeperReauthResponse> gatekeeperReauthRequiredExceptionHandler(
+            GatekeeperReauthRequiredException e, HttpServletRequest request) {
+        log.warn("Gatekeeper reauth required for scope: {}", e.getScope());
+        HttpSession session = request.getSession();
+        session.setAttribute(REQUIRED_AUTH_SCOPE, e.getAuthScopeEnum());
+        session.removeAttribute(USER_LOGIN_STATE);
+
+        GatekeeperReauthResponse response = new GatekeeperReauthResponse(
+                e.getAuthScopeEnum().name(),
+                e.getScope(),
+                e.getOriginalMessage());
+        return new BaseResponse<>(ErrorCode.NOT_LOGIN_ERROR.getCode(), response, e.getMessage());
+    }
+
     @ExceptionHandler(BusinessException.class)
     public BaseResponse<?> businessExceptionHandler(BusinessException e) {
         log.error("BusinessException", e);
