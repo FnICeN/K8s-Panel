@@ -82,6 +82,7 @@ const items: ItemType[] = reactive([
   getItem('集群管理', '/health', () => h(CheckCircleOutlined), [
     getItem('节点管理', '/nodes'),
     getItem('Pod管理', '/pods'),
+    getItem('Deployment管理', '/deployments'),
     getItem('命名空间管理', '/namespaces'),
     getItem('服务管理', '/services'),
   ]),
@@ -117,6 +118,7 @@ function updateOpenKeys(path: string) {
     path === '/health' ||
     path.startsWith('/nodes') ||
     path.startsWith('/pods') ||
+    path.startsWith('/deployments') ||
     path.startsWith('/namespaces') ||
     path.startsWith('/services')
   ) {
@@ -152,6 +154,14 @@ function updateBreadcrumb(path: string) {
   } else if (path.startsWith('/namespaces')) {
     items.push({ title: '集群管理', path: '/' })
     items.push({ title: '命名空间管理', path: '/namespaces' })
+  } else if (path.startsWith('/deployments')) {
+    items.push({ title: '集群管理', path: '/' })
+    items.push({ title: 'Deployment管理', path: '/deployments' })
+
+    const match = path.match(/\/deployments\/([^/]+)\/(.*)/)
+    if (match && match[2]) {
+      items.push({ title: match[2] })
+    }
   } else if (path.startsWith('/services')) {
     items.push({ title: '集群管理', path: '/' })
     items.push({ title: '服务管理', path: '/services' })

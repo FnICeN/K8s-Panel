@@ -49,6 +49,16 @@ const router = createRouter({
           component: () => import('../pages/cluster/ServiceSpec.vue'),
         },
         {
+          path: 'deployments',
+          name: 'deployments',
+          component: () => import('../pages/cluster/DeploymentManager.vue'),
+        },
+        {
+          path: 'deployments/:namespace/:name',
+          name: 'deploymentSpec',
+          component: () => import('../pages/cluster/DeploymentSpec.vue'),
+        },
+        {
           path: 'namespaces',
           name: 'namespaces',
           component: () => import('../pages/cluster/NamespaceManager.vue'),

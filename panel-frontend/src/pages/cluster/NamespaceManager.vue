@@ -4,7 +4,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const namespaces = ref<(API.NamespaceVO | undefined)[]>([])
+type NamespaceItem = API.NamespaceVO & {
+  status?: {
+    phase?: string
+  }
+}
+
+const namespaces = ref<NamespaceItem[]>([])
 
 onMounted(() => {
   loadNamespaces()
@@ -13,13 +19,13 @@ onMounted(() => {
 const loadNamespaces = async () => {
   try {
     const response = await getNamespaces()
-    namespaces.value = response.data.data?.items || []
+    namespaces.value = (response.data.data?.items || []) as NamespaceItem[]
   } catch (error) {
     console.error('Failed to load namespaces:', error)
   }
 }
 
-const handleNamespaceClick = (namespace: API.NamespaceVO) => {
+const handleNamespaceClick = (namespace: NamespaceItem) => {
   if (namespace.metadata?.name) {
     router.push({
       path: '/pods',
@@ -28,7 +34,7 @@ const handleNamespaceClick = (namespace: API.NamespaceVO) => {
   }
 }
 
-const getNamespaceStatusColor = (namespace: API.NamespaceVO) => {
+const getNamespaceStatusColor = (namespace: NamespaceItem) => {
   const phase = namespace.status?.phase
   switch (phase) {
     case 'Active':

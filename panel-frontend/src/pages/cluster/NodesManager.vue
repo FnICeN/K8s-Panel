@@ -4,7 +4,13 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const nodes = ref<(API.NodeVO | undefined)[]>([])
+type NodeItem = API.NodeVO & {
+  metadata?: API.MetadataVO & {
+    labels?: Record<string, string>
+  }
+}
+
+const nodes = ref<NodeItem[]>([])
 
 onMounted(() => {
   loadNodes()
@@ -13,36 +19,36 @@ onMounted(() => {
 const loadNodes = () => {
   getNodes().then((res) => {
     console.log(res.data?.data?.items)
-    nodes.value = res.data?.data?.items || []
+    nodes.value = (res.data?.data?.items || []) as NodeItem[]
   })
 }
 
-const handleNodeClick = (node: API.NodeVO) => {
+const handleNodeClick = (node: NodeItem) => {
   if (node.metadata?.name) {
     router.push(`/nodes/${node.metadata.name}`)
   }
 }
 
-const getNodeStatus = (node: API.NodeVO) => {
+const getNodeStatus = (node: NodeItem) => {
   const condition = node.status?.conditions?.find((c) => c.type === 'Ready')
   return condition?.status === 'True' ? 'Ready' : 'NotReady'
 }
 
-const getNodeStatusColor = (node: API.NodeVO) => {
+const getNodeStatusColor = (node: NodeItem) => {
   const condition = node.status?.conditions?.find((c) => c.type === 'Ready')
   return condition?.status === 'True' ? 'green' : 'red'
 }
 
-const getNodeIP = (node: API.NodeVO) => {
+const getNodeIP = (node: NodeItem) => {
   const address = node.status?.addresses?.find((a) => a.type === 'InternalIP')
   return address?.address || ''
 }
 
-const getNodeVersion = (node: API.NodeVO) => {
+const getNodeVersion = (node: NodeItem) => {
   return node.status?.nodeInfo?.kubeletVersion || ''
 }
 
-const getNodeRole = (node: API.NodeVO) => {
+const getNodeRole = (node: NodeItem) => {
   const labels = node.metadata?.labels
   if (labels && 'node-role.kubernetes.io/control-plane' in labels) {
     return 'control-plane'

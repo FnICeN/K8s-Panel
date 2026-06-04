@@ -5,7 +5,21 @@ import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
 const route = useRoute()
-const pods = ref<(API.PodVO | undefined)[]>([])
+type PodItem = API.PodVO & {
+  spec?: {
+    nodeName?: string
+  }
+  status?: {
+    phase?: string
+    podIP?: string
+    containerStatuses?: Array<{
+      ready?: boolean
+      restartCount?: number
+    }>
+  }
+}
+
+const pods = ref<PodItem[]>([])
 const namespaces = ref<string[]>([])
 const selectedNamespace = ref<string>('')
 
@@ -40,19 +54,19 @@ const loadPods = async () => {
   if (!selectedNamespace.value) return
   try {
     const response = await getPodsAll({ namespace: selectedNamespace.value })
-    pods.value = response.data.data?.items || []
+    pods.value = (response.data.data?.items || []) as PodItem[]
   } catch (error) {
     console.error('Failed to load pods:', error)
   }
 }
 
-const handlePodClick = (pod: API.PodVO) => {
+const handlePodClick = (pod: PodItem) => {
   if (pod.metadata?.namespace && pod.metadata?.name) {
     router.push(`/pods/${pod.metadata.namespace}/${pod.metadata.name}`)
   }
 }
 
-const getPodStatusColor = (pod: API.PodVO) => {
+const getPodStatusColor = (pod: PodItem) => {
   const phase = pod.status?.phase
   switch (phase) {
     case 'Running':
@@ -68,7 +82,7 @@ const getPodStatusColor = (pod: API.PodVO) => {
   }
 }
 
-const getReadyContainers = (pod: API.PodVO) => {
+const getReadyContainers = (pod: PodItem) => {
   const containerStatuses = pod.status?.containerStatuses
   if (!containerStatuses) return '0 / 0'
   const ready = containerStatuses.filter((c) => c.ready).length
@@ -76,7 +90,7 @@ const getReadyContainers = (pod: API.PodVO) => {
   return `${ready} / ${total}`
 }
 
-const getRestartCount = (pod: API.PodVO) => {
+const getRestartCount = (pod: PodItem) => {
   const containerStatuses = pod.status?.containerStatuses
   if (!containerStatuses) return 0
   return containerStatuses.reduce((sum, c) => sum + (c.restartCount || 0), 0)
