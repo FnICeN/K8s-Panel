@@ -90,6 +90,16 @@ public class ClusterController {
         return ResultUtils.success(pods);
     }
 
+    @PostMapping(value="/pods", produces = "application/json")
+    @Operation(summary = "创建Pod")
+    public BaseResponse<PodSpecResponse> createPod(@RequestBody(required = false) CreatePodRequest createPodRequest, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String yaml = createPodRequest == null ? null : createPodRequest.getYaml();
+        PodSpecResponse pod = podService.createPod(user.getIdToken(), yaml);
+        return ResultUtils.success(pod);
+    }
+
     @GetMapping(value="/pods/{namespace}/{pod_name}", produces = "application/json")
     @Operation(summary = "获取某个pod")
     public BaseResponse<PodSpecResponse> getPod(@PathVariable("namespace") String namespace, @PathVariable("pod_name") String name, HttpServletRequest request) {

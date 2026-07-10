@@ -19,23 +19,29 @@ onMounted(() => {
 const loadNamespaces = async () => {
   try {
     const response = await getNamespaces()
-    namespaces.value = (response.data.data?.items || []) as NamespaceItem[]
+    namespaces.value = response.data.data?.items || []
   } catch (error) {
     console.error('Failed to load namespaces:', error)
   }
 }
 
-const handleNamespaceClick = (namespace: NamespaceItem) => {
+const handleNamespaceClick = (namespace: API.NamespaceVO) => {
   if (namespace.metadata?.name) {
     router.push({
       path: '/pods',
-      query: { namespace: namespace.metadata.name }
+      query: { namespace: namespace.metadata.name },
     })
   }
 }
 
-const getNamespaceStatusColor = (namespace: NamespaceItem) => {
-  const phase = namespace.status?.phase
+type NamespaceStatus = API.StatusVO & { phase?: string }
+
+const getNamespacePhase = (namespace: API.NamespaceVO) => {
+  return (namespace.status as NamespaceStatus | undefined)?.phase
+}
+
+const getNamespaceStatusColor = (namespace: API.NamespaceVO) => {
+  const phase = getNamespacePhase(namespace)
   switch (phase) {
     case 'Active':
       return 'green'
@@ -59,7 +65,7 @@ const getNamespaceStatusColor = (namespace: NamespaceItem) => {
       <a-table-column title="状态" key="status">
         <template #default="{ record }">
           <a-tag :color="getNamespaceStatusColor(record)">
-            {{ record.status?.phase || '-' }}
+            {{ getNamespacePhase(record) || '-' }}
           </a-tag>
         </template>
       </a-table-column>

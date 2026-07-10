@@ -19,6 +19,11 @@ const router = createRouter({
           component: () => import('../pages/Health.vue'),
         },
         {
+          path: 'audit-alerts',
+          name: 'auditAlerts',
+          component: () => import('../pages/AuditAlerts.vue'),
+        },
+        {
           path: 'nodes',
           name: 'nodes',
           component: () => import('../pages/cluster/NodesManager.vue'),

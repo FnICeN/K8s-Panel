@@ -3,6 +3,8 @@ package com.ficn.panel.client.k8s;
 import com.ficn.panel.config.ClusterPropertiesConfig;
 import com.ficn.panel.exception.BusinessException;
 import com.ficn.panel.exception.ErrorCode;
+import com.ficn.panel.parser.GatekeeperDenyParser;
+import com.ficn.panel.exception.GatekeeperReauthRequiredException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -27,6 +29,7 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
 
     private final RestTemplate restTemplate;
     private final ClusterPropertiesConfig clusterPropertiesConfig;
+    private final GatekeeperDenyParser gatekeeperDenyParser;
 
     @Override
     public <T> T get(String token, String path, Class<T> responseType) {
@@ -91,8 +94,14 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
         if (e instanceof HttpClientErrorException.Unauthorized) {
             return new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "Kubernetes token is invalid or expired");
         }
-        if (e instanceof HttpClientErrorException.Forbidden) {
-            return new BusinessException(ErrorCode.FORBIDDEN_ERROR, "No permission to access Kubernetes resource");
+        if (e instanceof HttpClientErrorException.Forbidden forbidden) {
+            return gatekeeperDenyParser.parse(forbidden)
+                    .<BusinessException>map(challenge -> new GatekeeperReauthRequiredException(
+                            challenge.message(),
+                            challenge.scope(),
+                            challenge.authScopeEnum()))
+                    .orElseGet(() -> new BusinessException(ErrorCode.FORBIDDEN_ERROR,
+                            "No permission to access Kubernetes resource"));
         }
         if (e instanceof ResourceAccessException) {
             return new BusinessException(ErrorCode.OPERATION_ERROR, "Unable to connect Kubernetes API server");

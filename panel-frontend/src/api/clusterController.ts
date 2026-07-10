@@ -163,6 +163,18 @@ export async function getNodeAll(
   })
 }
 
+/** 创建Pod POST /cluster/pods */
+export async function createPod(body: API.CreatePodRequest, options?: { [key: string]: any }) {
+  return request<API.BaseResponsePodSpecResponse>('/cluster/pods', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** 获取某个命名空间下所有pod GET /cluster/pods/${param0} */
 export async function getPodsAll(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
