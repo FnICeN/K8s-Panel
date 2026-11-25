@@ -2,9 +2,12 @@ import axios from 'axios'
 import { message } from 'ant-design-vue'
 import { useAuthStore } from '@/stores/auth'
 
+// 跟随当前页面的主机名：本机打开仍是 localhost，局域网用这台机器的 IP 打开时请求也会打到这台机器的后端
+const apiHost = window.location.hostname
+
 // 创建 Axios 实例
 const myAxios = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: `http://${apiHost}:8080/api`,
   timeout: 60000,
   withCredentials: true,
 })
@@ -34,19 +37,19 @@ myAxios.interceptors.response.use(
       if (
         !response.request.responseURL.includes('user/get/login') &&
         !window.location.pathname.includes('/user/login')
-      ) {
-        message.warning('请先登录')
-        // 触发登录对话框显示
-        if (window.showLoginDialog) {
       try {
         useAuthStore().setLoggedIn(false)
       } catch {
         // Pinia 尚未就绪时忽略
       }
+      ) {
+        message.warning('请先登录')
+        // 触发登录对话框显示
+        !response.request.responseURL.includes('/auth/logout') &&
+        if (window.showLoginDialog) {
           window.showLoginDialog()
         }
       }
-        !response.request.responseURL.includes('/auth/logout') &&
     }
     message.warning(data.msg)
     return response
