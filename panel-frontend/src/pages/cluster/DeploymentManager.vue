@@ -143,7 +143,7 @@ const getDeploymentStatusColor = (deployment: DeploymentListItem) => {
   <div class="deployment-manager">
     <div class="page-header">
       <div>
-        <h2>Deployment管理</h2>
+        <h2>计算单元部署控制器（Deployment）</h2>
         <div class="namespace-line">
           命名空间：
           <a-select
@@ -223,7 +223,7 @@ const getDeploymentStatusColor = (deployment: DeploymentListItem) => {
 
 .page-header h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
 }
 
@@ -233,6 +233,7 @@ const getDeploymentStatusColor = (deployment: DeploymentListItem) => {
   gap: 8px;
   margin-top: 8px;
   color: #666;
+  font-size: 17px;
 }
 
 .namespace-select {

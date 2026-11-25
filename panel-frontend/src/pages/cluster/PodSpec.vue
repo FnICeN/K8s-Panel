@@ -2,6 +2,7 @@
 import { ref, onMounted, h, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getPod, getPodAll } from '@/api/clusterController.ts'
+import { getNodeDisplayName } from '@/utils/nodeDisplayName.ts'
 import { RedoOutlined } from '@ant-design/icons-vue'
 
 const route = useRoute()
@@ -121,7 +122,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
                 <div class="status-item">
                   <span class="status-label">节点</span>
                   <a :href="`/nodes/${podData.spec?.nodeName}`" v-if="podData.spec?.nodeName">
-                    {{ podData.spec?.nodeName }}
+                    {{ getNodeDisplayName(podData.spec?.nodeName) }}
                   </a>
                   <span v-else>-</span>
                 </div>
@@ -305,7 +306,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 
 .pod-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
 }
 
@@ -337,12 +338,12 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 }
 
 .status-label {
-  font-size: 14px;
+  font-size: 17px;
   color: #666;
 }
 
 .status-value {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
 }
 
@@ -364,12 +365,12 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 }
 
 .info-label {
-  font-size: 14px;
+  font-size: 17px;
   color: #666;
 }
 
 .info-value {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
 }
 
@@ -386,7 +387,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 .labels h4,
 .annotations h4 {
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -409,14 +410,14 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 
 .container-image {
   color: #666;
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .tab-placeholder {
   padding: 48px 0;
   text-align: center;
   color: #999;
-  font-size: 16px;
+  font-size: 19px;
 }
 
 .yaml-container {
@@ -448,7 +449,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 
 .container-header h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
 }
 
@@ -464,12 +465,12 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 }
 
 .detail-label {
-  font-size: 14px;
+  font-size: 17px;
   color: #666;
 }
 
 .detail-value {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
 }
 
@@ -479,7 +480,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 
 .detail-section h4 {
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -518,7 +519,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 
 .state-time {
   color: #666;
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .more-details {

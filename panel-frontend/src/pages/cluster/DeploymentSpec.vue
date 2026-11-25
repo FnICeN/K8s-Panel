@@ -7,6 +7,7 @@ import {
   getDeploymentLog,
   getDeploymentPods,
 } from '@/api/clusterController.ts'
+import { getNodeDisplayName } from '@/utils/nodeDisplayName.ts'
 import {
   DeleteOutlined,
   FileTextOutlined,
@@ -574,7 +575,7 @@ const formatContainerPorts = (container: Container) => {
               <template #default="{ record }">{{ record.status?.podIP || '-' }}</template>
             </a-table-column>
             <a-table-column title="节点" key="node">
-              <template #default="{ record }">{{ record.spec?.nodeName || '-' }}</template>
+              <template #default="{ record }">{{ getNodeDisplayName(record.spec?.nodeName) }}</template>
             </a-table-column>
             <a-table-column title="创建时间" key="created">
               <template #default="{ record }">
@@ -692,13 +693,14 @@ const formatContainerPorts = (container: Container) => {
 
 .deployment-header h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
 }
 
 .namespace-line {
   margin-top: 6px;
   color: #666;
+  font-size: 17px;
 }
 
 .deployment-actions,
@@ -740,7 +742,7 @@ const formatContainerPorts = (container: Container) => {
 .status-label,
 .info-label {
   color: #666;
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .status-value,
@@ -794,7 +796,7 @@ const formatContainerPorts = (container: Container) => {
   color: #38d26a;
   background: #050505;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.55;
   white-space: pre-wrap;
 }

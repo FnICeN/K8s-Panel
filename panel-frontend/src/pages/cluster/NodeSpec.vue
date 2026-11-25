@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, h, watch } from 'vue'
+import { ref, onMounted, h, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { getNode, getNodeAll } from '@/api/clusterController.ts'
+import { getNodeDisplayName } from '@/utils/nodeDisplayName.ts'
 import {
   BgColorsOutlined,
   InfoCircleOutlined,
@@ -12,6 +13,7 @@ import {
 
 const route = useRoute()
 const nodeName = ref(route.params.name as string)
+const displayName = computed(() => getNodeDisplayName(nodeName.value))
 const activeTab = ref('overview')
 const loading = ref(true)
 const nodeData = ref<API.NodeSpecResponse>({})
@@ -103,7 +105,7 @@ watch(activeTab, (newTab) => {
 <template>
   <div class="node-spec">
     <div class="node-header">
-      <h2>{{ nodeName }}</h2>
+      <h2>{{ displayName }}</h2>
       <div class="node-actions">
         <a-button @click="handleRefresh" :loading="loading" :icon="h(RedoOutlined)">刷新</a-button>
         <a-button @click="handleDescribe" :icon="h(InfoCircleOutlined)">描述</a-button>
@@ -143,6 +145,10 @@ watch(activeTab, (newTab) => {
                 </div>
                 <div class="info-item">
                   <span class="info-label">名称:</span>
+                  <span class="info-value">{{ displayName }}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">主机名:</span>
                   <span class="info-value">{{ nodeName }}</span>
                 </div>
                 <div class="info-item">
@@ -299,7 +305,7 @@ watch(activeTab, (newTab) => {
 
 .node-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
 }
 
@@ -351,12 +357,12 @@ watch(activeTab, (newTab) => {
 }
 
 .info-label {
-  font-size: 14px;
+  font-size: 17px;
   color: #666;
 }
 
 .info-value {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
 }
 
@@ -373,7 +379,7 @@ watch(activeTab, (newTab) => {
 .labels h4,
 .annotations h4 {
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -396,7 +402,7 @@ watch(activeTab, (newTab) => {
 
 .resource-item h4 {
   margin-bottom: 12px;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -412,12 +418,12 @@ watch(activeTab, (newTab) => {
 }
 
 .resource-label {
-  font-size: 14px;
+  font-size: 17px;
   color: #666;
 }
 
 .resource-value {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
 }
 
@@ -425,7 +431,7 @@ watch(activeTab, (newTab) => {
   padding: 48px 0;
   text-align: center;
   color: #999;
-  font-size: 16px;
+  font-size: 19px;
 }
 
 .yaml-container {

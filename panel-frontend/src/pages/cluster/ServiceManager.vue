@@ -110,22 +110,32 @@ const getPorts = (service: API.ServiceVO) => {
     })
     .join(', ')
 }
+
+const filterNamespaceOption = (input: string, option: any) => {
+  const value = option?.value ?? option?.label ?? ''
+  return String(value).toLowerCase().includes(input.toLowerCase())
+}
 </script>
 
 <template>
   <div class="service-manager">
     <div class="page-header">
-      <h2>Services</h2>
-      <a-select
-        v-model:value="selectedNamespace"
-        class="namespace-select"
-        placeholder="选择命名空间"
-        @change="loadServices"
-      >
-        <a-select-option v-for="ns in namespaces" :key="ns" :value="ns">
-          {{ ns }}
-        </a-select-option>
-      </a-select>
+      <h2>服务发现（Service）</h2>
+      <div class="namespace-filter">
+        <span class="namespace-label">命名空间</span>
+        <a-select
+          v-model:value="selectedNamespace"
+          class="namespace-select"
+          placeholder="请选择命名空间"
+          show-search
+          :filter-option="filterNamespaceOption"
+          @change="loadServices"
+        >
+          <a-select-option v-for="ns in namespaces" :key="ns" :value="ns">
+            {{ ns }}
+          </a-select-option>
+        </a-select>
+      </div>
     </div>
 
     <a-table
@@ -184,11 +194,23 @@ const getPorts = (service: API.ServiceVO) => {
 
 .page-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
 }
 
+.namespace-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.namespace-label {
+  color: #666;
+  font-size: 17px;
+  white-space: nowrap;
+}
+
 .namespace-select {
-  width: 200px;
+  width: 220px;
 }
 </style>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { getNamespaces, getPodsAll } from '@/api/clusterController.ts'
+import { getNodeDisplayName } from '@/utils/nodeDisplayName.ts'
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
@@ -95,22 +96,32 @@ const getRestartCount = (pod: API.PodVO) => {
   if (!containerStatuses) return 0
   return containerStatuses.reduce((sum, c) => sum + (c.restartCount || 0), 0)
 }
+
+const filterNamespaceOption = (input: string, option: any) => {
+  const value = option?.value ?? option?.label ?? ''
+  return String(value).toLowerCase().includes(input.toLowerCase())
+}
 </script>
 
 <template>
   <div class="pod-manager">
     <div class="page-header">
-      <h2>Pods</h2>
-      <a-select
-        v-model:value="selectedNamespace"
-        style="width: 200px"
-        placeholder="选择命名空间"
-        @change="loadPods"
-      >
-        <a-select-option v-for="ns in namespaces" :key="ns" :value="ns">
-          {{ ns }}
-        </a-select-option>
-      </a-select>
+      <h2>计算单元（Pod）</h2>
+      <div class="namespace-filter">
+        <span class="namespace-label">命名空间</span>
+        <a-select
+          v-model:value="selectedNamespace"
+          class="namespace-select"
+          placeholder="请选择命名空间"
+          show-search
+          :filter-option="filterNamespaceOption"
+          @change="loadPods"
+        >
+          <a-select-option v-for="ns in namespaces" :key="ns" :value="ns">
+            {{ ns }}
+          </a-select-option>
+        </a-select>
+      </div>
     </div>
     <a-table :data-source="pods" row-key="metadata.name" :pagination="{ pageSize: 20 }">
       <a-table-column title="名称" data-index="metadata.name" key="name">
@@ -142,7 +153,7 @@ const getRestartCount = (pod: API.PodVO) => {
       </a-table-column>
       <a-table-column title="节点" key="node">
         <template #default="{ record }">
-          {{ record.spec?.nodeName || '-' }}
+          {{ getNodeDisplayName(record.spec?.nodeName) }}
         </template>
       </a-table-column>
       <a-table-column title="创建时间" key="created">
@@ -168,7 +179,23 @@ const getRestartCount = (pod: API.PodVO) => {
 
 .page-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
+}
+
+.namespace-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.namespace-label {
+  color: #666;
+  font-size: 17px;
+  white-space: nowrap;
+}
+
+.namespace-select {
+  width: 220px;
 }
 </style>

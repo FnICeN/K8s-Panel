@@ -290,14 +290,14 @@ const getPortsText = () => {
 
 .service-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
 }
 
 .namespace-line {
   margin-top: 4px;
   color: #666;
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .service-actions {
@@ -330,12 +330,12 @@ const getPortsText = () => {
 }
 
 .info-label {
-  font-size: 14px;
+  font-size: 17px;
   color: #666;
 }
 
 .info-value {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   word-break: break-all;
 }
@@ -354,7 +354,7 @@ const getPortsText = () => {
   padding: 48px 0;
   text-align: center;
   color: #999;
-  font-size: 16px;
+  font-size: 19px;
 }
 
 .yaml-container {

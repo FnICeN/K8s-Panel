@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { getNodes } from '@/api/clusterController.ts'
-import { ref, onMounted } from 'vue'
+import { getNodeDisplayName, isSimKubeVirtualNode } from '@/utils/nodeDisplayName.ts'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+const SIMKUBE_GROUP_KEY = '__simkube-virtual-group__'
+
+type NodeTableRow = API.NodeVO & {
+  isGroup?: boolean
+  children?: NodeTableRow[]
+}
 
 const router = useRouter()
 const nodes = ref<(API.NodeVO | undefined)[]>([])
@@ -12,55 +20,105 @@ onMounted(() => {
 
 const loadNodes = () => {
   getNodes().then((res) => {
-    console.log(res.data?.data?.items)
     nodes.value = res.data?.data?.items || []
   })
 }
 
-const handleNodeClick = (node: API.NodeVO) => {
-  if (node.metadata?.name) {
-    router.push(`/nodes/${node.metadata.name}`)
+const tableData = computed<NodeTableRow[]>(() => {
+  const list = nodes.value.filter((node): node is API.NodeVO => !!node)
+  const physical: NodeTableRow[] = []
+  const virtual: NodeTableRow[] = []
+
+  for (const node of list) {
+    if (isSimKubeVirtualNode(node.metadata?.name)) {
+      virtual.push(node)
+    } else {
+      physical.push(node)
+    }
   }
+
+  virtual.sort((a, b) =>
+    (a.metadata?.name || '').localeCompare(b.metadata?.name || '', undefined, { numeric: true }),
+  )
+
+  if (virtual.length === 0) {
+    return physical
+  }
+
+  physical.push({
+    isGroup: true,
+    metadata: { name: SIMKUBE_GROUP_KEY },
+    children: virtual,
+  })
+  return physical
+})
+
+const handleNodeClick = (node: NodeTableRow) => {
+  if (node.isGroup || !node.metadata?.name) return
+  router.push(`/nodes/${node.metadata.name}`)
 }
 
-const getNodeStatus = (node: API.NodeVO) => {
+const getNodeStatus = (node: NodeTableRow) => {
+  if (node.isGroup) {
+    const children = node.children || []
+    const ready = children.filter((child) => getNodeStatus(child) === 'Ready').length
+    return `${ready} / ${children.length} Ready`
+  }
   const condition = node.status?.conditions?.find((c) => c.type === 'Ready')
   return condition?.status === 'True' ? 'Ready' : 'NotReady'
 }
 
-const getNodeStatusColor = (node: API.NodeVO) => {
+const getNodeStatusColor = (node: NodeTableRow) => {
+  if (node.isGroup) {
+    const children = node.children || []
+    if (children.length === 0) return 'default'
+    const allReady = children.every((child) => getNodeStatus(child) === 'Ready')
+    return allReady ? 'green' : 'gold'
+  }
   const condition = node.status?.conditions?.find((c) => c.type === 'Ready')
   return condition?.status === 'True' ? 'green' : 'red'
 }
 
-const getNodeIP = (node: API.NodeVO) => {
+const getNodeIP = (node: NodeTableRow) => {
+  if (node.isGroup) return '-'
   const address = node.status?.addresses?.find((a) => a.type === 'InternalIP')
   return address?.address || ''
 }
 
-const getNodeVersion = (node: API.NodeVO) => {
+const getNodeVersion = (node: NodeTableRow) => {
+  if (node.isGroup) return '-'
   return node.status?.nodeInfo?.kubeletVersion || ''
 }
 
 type NodeMetadata = API.MetadataVO & { labels?: Record<string, any> }
 
-const getNodeRole = (node: API.NodeVO) => {
+const getNodeRole = (node: NodeTableRow) => {
+  if (node.isGroup) return 'SimKube'
   const labels = (node.metadata as NodeMetadata | undefined)?.labels
   if (labels && 'node-role.kubernetes.io/control-plane' in labels) {
     return 'control-plane'
-  } else {
-    return 'node'
   }
+  return 'node'
 }
+
+const getRowKey = (record: NodeTableRow) => record.metadata?.name || ''
 </script>
 
 <template>
   <div class="nodes-manager">
-    <h2>Nodes</h2>
-    <a-table :data-source="nodes" row-key="metadata.name" :pagination="{ pageSize: 20 }">
+    <h2>星载计算节点管理</h2>
+    <a-table
+      :data-source="tableData"
+      :row-key="getRowKey"
+      :pagination="{ pageSize: 20 }"
+      :indent-size="24"
+    >
       <a-table-column title="名称" data-index="metadata.name" key="name">
         <template #default="{ record }">
-          <a @click="handleNodeClick(record)">{{ record.metadata?.name }}</a>
+          <span v-if="record.isGroup" class="group-name">SimKube虚拟节点</span>
+          <a v-else @click="handleNodeClick(record)">{{
+            getNodeDisplayName(record.metadata?.name)
+          }}</a>
         </template>
       </a-table-column>
       <a-table-column title="状态" key="status">
@@ -70,7 +128,7 @@ const getNodeRole = (node: API.NodeVO) => {
       </a-table-column>
       <a-table-column title="Roles" key="roles">
         <template #default="{ record }">
-          <a-tag color="blue">{{ getNodeRole(record) }}</a-tag>
+          <a-tag :color="record.isGroup ? 'purple' : 'blue'">{{ getNodeRole(record) }}</a-tag>
         </template>
       </a-table-column>
       <a-table-column title="IP Address" key="ip">
@@ -85,7 +143,7 @@ const getNodeRole = (node: API.NodeVO) => {
       </a-table-column>
       <a-table-column title="创建时间" key="created">
         <template #default="{ record }">
-          {{ record.metadata?.creationTimestamp || '-' }}
+          {{ record.isGroup ? '-' : record.metadata?.creationTimestamp || '-' }}
         </template>
       </a-table-column>
     </a-table>
@@ -99,7 +157,11 @@ const getNodeRole = (node: API.NodeVO) => {
 
 h2 {
   margin-bottom: 16px;
-  font-size: 20px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.group-name {
   font-weight: 600;
 }
 </style>

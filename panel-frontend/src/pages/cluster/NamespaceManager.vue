@@ -85,7 +85,7 @@ const getNamespaceStatusColor = (namespace: API.NamespaceVO) => {
 
 h2 {
   margin-bottom: 16px;
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
 }
 </style>
