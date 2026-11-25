@@ -2,16 +2,68 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { createPod } from '@/api/clusterController.ts'
+import {
+  createDeployment,
+  createNamespace,
+  createPod,
+  createService,
+} from '@/api/clusterController.ts'
+
+type ResourceType = 'Pod' | 'Deployment' | 'Service' | 'Namespace'
+
+type CreatedMeta = { namespace?: string; name?: string } | undefined
+
+const resourceConfigs: Record<
+  ResourceType,
+  {
+    create: (yaml: string) => Promise<{ code?: number; metadata?: CreatedMeta }>
+    detailPath: (meta: CreatedMeta) => string | undefined
+  }
+> = {
+  Pod: {
+    create: async (yaml) => {
+      const response = await createPod({ yaml })
+      return { code: response.data.code, metadata: response.data.data?.metadata }
+    },
+    detailPath: (meta) =>
+      meta?.namespace && meta?.name ? `/pods/${meta.namespace}/${meta.name}` : undefined,
+  },
+  Deployment: {
+    create: async (yaml) => {
+      const response = await createDeployment({ yaml })
+      return { code: response.data.code, metadata: response.data.data?.metadata }
+    },
+    detailPath: (meta) =>
+      meta?.namespace && meta?.name ? `/deployments/${meta.namespace}/${meta.name}` : undefined,
+  },
+  Service: {
+    create: async (yaml) => {
+      const response = await createService({ yaml })
+      return { code: response.data.code, metadata: response.data.data?.metadata }
+    },
+    detailPath: (meta) =>
+      meta?.namespace && meta?.name ? `/services/${meta.namespace}/${meta.name}` : undefined,
+  },
+  Namespace: {
+    create: async (yaml) => {
+      const response = await createNamespace({ yaml })
+      return { code: response.data.code, metadata: response.data.data?.metadata }
+    },
+    detailPath: () => '/namespaces',
+  },
+}
 
 const router = useRouter()
 const visible = ref(false)
-const resourceType = ref<'Pod'>('Pod')
+const resourceType = ref<ResourceType>('Pod')
 const yamlContent = ref('')
 const deploying = ref(false)
 const lineNumberOffset = ref(0)
 
-const resourceOptions = [{ label: 'Pod', value: 'Pod' }]
+const resourceOptions = (Object.keys(resourceConfigs) as ResourceType[]).map((type) => ({
+  label: type,
+  value: type,
+}))
 
 const lineNumbers = computed(() => {
   const lineCount = Math.max(yamlContent.value.split('\n').length, 1)
@@ -35,29 +87,24 @@ const handleDeploy = async () => {
     message.warning('请输入 YAML 配置')
     return
   }
-  if (resourceType.value !== 'Pod') {
-    message.warning('当前仅支持创建 Pod')
-    return
-  }
 
+  const config = resourceConfigs[resourceType.value]
   deploying.value = true
   try {
-    const response = await createPod({ yaml: yamlContent.value })
-    if (response.data.code !== 0) {
+    const result = await config.create(yamlContent.value)
+    if (result.code !== 0) {
       return
     }
 
     message.success('部署成功')
     visible.value = false
 
-    const pod = response.data.data
-    const namespace = pod?.metadata?.namespace
-    const name = pod?.metadata?.name
-    if (namespace && name) {
-      router.push(`/pods/${namespace}/${name}`)
+    const path = config.detailPath(result.metadata)
+    if (path) {
+      router.push(path)
     }
   } catch (error) {
-    console.error('部署 Pod 失败:', error)
+    console.error(`部署 ${resourceType.value} 失败:`, error)
     message.error('部署失败')
   } finally {
     deploying.value = false
@@ -102,7 +149,7 @@ defineExpose({
             v-model="yamlContent"
             class="yaml-textarea"
             spellcheck="false"
-            placeholder="请输入 Pod YAML 配置"
+            :placeholder="`请输入 ${resourceType} YAML 配置`"
             @scroll="handleEditorScroll"
           ></textarea>
         </div>
