@@ -57,6 +57,11 @@ public class AuthController {
         return ResultUtils.success(pollTokenResponse);
     }
 
+    @GetMapping("/status")
+    public BaseResponse<Boolean> getLoginStatus(HttpSession session) {
+        return ResultUtils.success(session.getAttribute(USER_LOGIN_STATE) != null);
+    }
+
     @GetMapping("/logout")
     public BaseResponse<Boolean> logout(HttpServletRequest request) {
         boolean logout = userService.userLogout(request);

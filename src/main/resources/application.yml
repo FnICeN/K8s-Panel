@@ -4,7 +4,7 @@ spring:
     version: 1.0.0
   session:
     store-type: redis
-    timeout: 60
+    timeout: 1800
   data:
     redis:
       host: localhost
@@ -20,7 +20,7 @@ server:
     context-path: /api
     session:
       cookie:
-        max-age: 60
+        max-age: 1800
 
 # springdoc-openapi项目配置
 springdoc:
