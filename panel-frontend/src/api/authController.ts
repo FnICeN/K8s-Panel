@@ -10,6 +10,14 @@ export async function getDeviceCode(options?: { [key: string]: any }) {
   })
 }
 
+/** 查询当前登录状态 GET /auth/status */
+export async function getLoginStatus(options?: { [key: string]: any }) {
+  return request<API.BaseResponseBoolean>('/auth/status', {
+    method: 'GET',
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 GET /auth/logout */
 export async function logout(options?: { [key: string]: any }) {
   return request<API.BaseResponseBoolean>('/auth/logout', {

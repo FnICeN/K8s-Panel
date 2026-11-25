@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { message } from 'ant-design-vue'
+import { useAuthStore } from '@/stores/auth'
 
 // 创建 Axios 实例
 const myAxios = axios.create({
@@ -37,9 +38,15 @@ myAxios.interceptors.response.use(
         message.warning('请先登录')
         // 触发登录对话框显示
         if (window.showLoginDialog) {
+      try {
+        useAuthStore().setLoggedIn(false)
+      } catch {
+        // Pinia 尚未就绪时忽略
+      }
           window.showLoginDialog()
         }
       }
+        !response.request.responseURL.includes('/auth/logout') &&
     }
     message.warning(data.msg)
     return response

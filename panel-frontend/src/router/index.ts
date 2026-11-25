@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import BasicLayout from '@/layouts/BasicLayout.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -71,6 +72,16 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+// 路由级登录守卫：未登录时放行导航（页面自身会做空态处理），但统一弹出登录对话框
+router.beforeEach(async () => {
+  const authStore = useAuthStore()
+  const loggedIn = await authStore.refreshLoginStatus()
+  if (!loggedIn) {
+    authStore.requestLoginDialog()
+  }
+  return true
 })
 
 export default router

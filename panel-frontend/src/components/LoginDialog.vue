@@ -3,8 +3,10 @@ import { ref, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { useAuth } from '@/composables/useAuth'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const { startDeviceFlow, pollForToken, loading } = useAuth()
 
 const visible = ref(false)
@@ -44,6 +46,10 @@ const resetState = () => {
 }
 
 const handleOpenLogin = () => {
+  // 已经打开时不重复获取设备码（路由守卫可能多次触发）
+  if (visible.value) {
+    return
+  }
   visible.value = true
   handleGetDeviceCode()
 }
@@ -78,32 +84,33 @@ const handlePollToken = async () => {
 
   const intervalMs = deviceCodeData.value.interval * 1000
 
-  pollingIntervalId.value = window.setInterval(async () => {
-    const success = await pollForToken(deviceCodeData.value?.interval || 5)
-    if (success) {
-      if (pollingIntervalId.value) {
-        clearInterval(pollingIntervalId.value)
-        pollingIntervalId.value = null
-      }
-      polling.value = false
-      visible.value = false
-      message.success('登录成功')
-      emit('loginSuccess')
-      router.push('/')
-    }
-  }, intervalMs)
-
-  const firstPoll = await pollForToken(deviceCodeData.value.interval)
-  if (firstPoll) {
+  const finishLogin = async () => {
     if (pollingIntervalId.value) {
       clearInterval(pollingIntervalId.value)
       pollingIntervalId.value = null
     }
     polling.value = false
     visible.value = false
+    authStore.setLoggedIn(true)
+    // 再向后端确认一次，保证顶栏登录态与 Session 同步
+    await authStore.refreshLoginStatus()
     message.success('登录成功')
     emit('loginSuccess')
-    router.push('/')
+    if (router.currentRoute.value.path !== '/') {
+      router.push('/')
+    }
+  }
+
+  pollingIntervalId.value = window.setInterval(async () => {
+    const success = await pollForToken(deviceCodeData.value?.interval || 5)
+    if (success) {
+      finishLogin()
+    }
+  }, intervalMs)
+
+  const firstPoll = await pollForToken(deviceCodeData.value.interval)
+  if (firstPoll) {
+    finishLogin()
   }
 }
 
@@ -113,10 +120,7 @@ const handleCancel = () => {
 
 defineExpose({
   open: handleOpenLogin,
-  show: () => {
-    visible.value = true
-    handleGetDeviceCode()
-  },
+  show: handleOpenLogin,
 })
 </script>
 
