@@ -9,6 +9,7 @@ import com.ficn.panel.model.entity.Deployment;
 import com.ficn.panel.model.entity.vo.DeploymentVO;
 import com.ficn.panel.model.entity.vo.EventVO;
 import com.ficn.panel.model.entity.vo.PodVO;
+import com.ficn.panel.parser.K8sResourceYamlParser;
 import com.ficn.panel.service.cluster.DeploymentService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,13 @@ public class DeploymentServiceImpl implements DeploymentService {
     @Override
     public DeploymentSpecResponse getDeployment(String token, String namespace, String deploymentName) {
         return deploymentApi.get(token, namespace, deploymentName);
+    }
+
+    @Override
+    public DeploymentSpecResponse createDeployment(String token, String yaml) {
+        K8sResourceYamlParser.ParsedResource resource =
+                K8sResourceYamlParser.parseNamespaced(yaml, "Deployment", "apps/v1");
+        return deploymentApi.create(token, resource.namespace(), resource.body());
     }
 
     @Override

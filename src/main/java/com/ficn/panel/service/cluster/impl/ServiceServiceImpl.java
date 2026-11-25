@@ -4,6 +4,7 @@ import com.ficn.panel.client.k8s.ServiceApi;
 import com.ficn.panel.model.dto.cluster.K8sListResponse;
 import com.ficn.panel.model.dto.cluster.ServiceSpecResponse;
 import com.ficn.panel.model.entity.vo.ServiceVO;
+import com.ficn.panel.parser.K8sResourceYamlParser;
 import com.ficn.panel.service.cluster.ServiceService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,13 @@ public class ServiceServiceImpl implements ServiceService {
     @Override
     public ServiceSpecResponse getService(String token, String namespace, String serviceName) {
         return serviceApi.get(token, namespace, serviceName);
+    }
+
+    @Override
+    public ServiceSpecResponse createService(String token, String yaml) {
+        K8sResourceYamlParser.ParsedResource resource =
+                K8sResourceYamlParser.parseNamespaced(yaml, "Service", "v1");
+        return serviceApi.create(token, resource.namespace(), resource.body());
     }
 
     @Override

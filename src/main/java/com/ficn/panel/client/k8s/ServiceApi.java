@@ -22,6 +22,10 @@ public class ServiceApi {
         return k8sHttpClient.get(token, K8sApiPaths.service(namespace, serviceName), ServiceSpecResponse.class);
     }
 
+    public ServiceSpecResponse create(String token, String namespace, Object body) {
+        return k8sHttpClient.post(token, K8sApiPaths.namespaceServices(namespace), body, ServiceSpecResponse.class);
+    }
+
     public String getYaml(String token, String namespace, String serviceName) {
         return k8sHttpClient.getYaml(token, K8sApiPaths.service(namespace, serviceName));
     }

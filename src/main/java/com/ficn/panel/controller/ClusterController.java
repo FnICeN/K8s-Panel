@@ -80,6 +80,16 @@ public class ClusterController {
         return ResultUtils.success(namespaces);
     }
 
+    @PostMapping(value="/namespaces", produces = "application/json")
+    @Operation(summary = "创建Namespace")
+    public BaseResponse<NamespaceSpecResponse> createNamespace(@RequestBody(required = false) CreateNamespaceRequest createNamespaceRequest, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String yaml = createNamespaceRequest == null ? null : createNamespaceRequest.getYaml();
+        NamespaceSpecResponse namespace = NamespaceService.createNamespace(user.getIdToken(), yaml);
+        return ResultUtils.success(namespace);
+    }
+
     @GetMapping(value="/pods/{namespace}", produces = "application/json")
     @Operation(summary = "获取某个命名空间下所有pod")
     public BaseResponse<K8sListResponse<PodVO>> getPodsAll(@PathVariable("namespace") String namespace, HttpServletRequest request) {
@@ -128,6 +138,16 @@ public class ClusterController {
         K8sListResponse<DeploymentVO> deployments = deploymentService.getDeployments(user.getIdToken());
         ThrowUtils.throwIf(deployments == null, ErrorCode.OPERATION_ERROR, "获取deployment列表失败");
         return ResultUtils.success(deployments);
+    }
+
+    @PostMapping(value="/deployments", produces = "application/json")
+    @Operation(summary = "创建Deployment")
+    public BaseResponse<DeploymentSpecResponse> createDeployment(@RequestBody(required = false) CreateDeploymentRequest createDeploymentRequest, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String yaml = createDeploymentRequest == null ? null : createDeploymentRequest.getYaml();
+        DeploymentSpecResponse deployment = deploymentService.createDeployment(user.getIdToken(), yaml);
+        return ResultUtils.success(deployment);
     }
 
     @GetMapping(value="/deployments/{namespace}", produces = "application/json")
@@ -212,6 +232,16 @@ public class ClusterController {
         K8sListResponse<ServiceVO> services = serviceService.getServices(user.getIdToken(), namespace);
         ThrowUtils.throwIf(services == null, ErrorCode.NOT_FOUND_ERROR, "获取service列表失败，命名空间可能不存在");
         return ResultUtils.success(services);
+    }
+
+    @PostMapping(value="/services", produces = "application/json")
+    @Operation(summary = "创建Service")
+    public BaseResponse<ServiceSpecResponse> createService(@RequestBody(required = false) CreateServiceRequest createServiceRequest, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String yaml = createServiceRequest == null ? null : createServiceRequest.getYaml();
+        ServiceSpecResponse service = serviceService.createService(user.getIdToken(), yaml);
+        return ResultUtils.success(service);
     }
 
     @GetMapping(value="/services/{namespace}/{service_name}", produces = "application/json")

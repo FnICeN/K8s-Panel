@@ -13,6 +13,8 @@ public interface DeploymentService {
 
     DeploymentSpecResponse getDeployment(String token, String namespace, String deploymentName);
 
+    DeploymentSpecResponse createDeployment(String token, String yaml);
+
     String getDeploymentAllSpec(String token, String namespace, String deploymentName);
 
     K8sListResponse<PodVO> getDeploymentPods(String token, String namespace, String deploymentName);
