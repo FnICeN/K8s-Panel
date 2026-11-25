@@ -69,6 +69,21 @@ const router = createRouter({
           name: 'namespaces',
           component: () => import('../pages/cluster/NamespaceManager.vue'),
         },
+        {
+          path: 'backup',
+          name: 'backup',
+          component: () => import('../pages/BackupConsole.vue'),
+        },
+        {
+          path: 'monitor',
+          name: 'monitor',
+          component: () => import('../pages/MonitorConsole.vue'),
+        },
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: () => import('../pages/DashboardConsole.vue'),
+        },
       ],
     },
   ],
