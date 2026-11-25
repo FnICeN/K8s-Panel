@@ -10,6 +10,21 @@ export async function getDeploymentsAll(options?: { [key: string]: any }) {
   })
 }
 
+/** 创建Deployment POST /cluster/deployments */
+export async function createDeployment(
+  body: API.CreateDeploymentRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseDeploymentSpecResponse>('/cluster/deployments', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** 获取某个命名空间下所有deployment GET /cluster/deployments/${param0} */
 export async function getDeploymentsByNamespace(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
@@ -127,9 +142,32 @@ export async function getNamespaces(options?: { [key: string]: any }) {
   })
 }
 
+/** 创建Namespace POST /cluster/namespaces */
+export async function createNamespace(
+  body: API.CreateNamespaceRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseNamespaceSpecResponse>('/cluster/namespaces', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** 获取所有节点 GET /cluster/nodes */
 export async function getNodes(options?: { [key: string]: any }) {
   return request<API.BaseResponseK8sListResponseNodeVO>('/cluster/nodes', {
+    method: 'GET',
+    ...(options || {}),
+  })
+}
+
+/** 获取所有节点实时资源用量 GET /cluster/node-metrics */
+export async function getNodeMetrics(options?: { [key: string]: any }) {
+  return request<API.BaseResponseK8sListResponseNodeMetricsVO>('/cluster/node-metrics', {
     method: 'GET',
     ...(options || {}),
   })
@@ -213,6 +251,21 @@ export async function getPodAll(
   return request<API.BaseResponseString>(`/cluster/pods/${param0}/${param1}/all`, {
     method: 'GET',
     params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 创建Service POST /cluster/services */
+export async function createService(
+  body: API.CreateServiceRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseServiceSpecResponse>('/cluster/services', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
     ...(options || {}),
   })
 }
