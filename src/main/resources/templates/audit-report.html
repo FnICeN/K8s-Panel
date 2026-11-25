@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>审计告警报告</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 15mm 18mm 15mm;
+            @bottom-center {
+                content: "第 " counter(page) " 页 / 共 " counter(pages) " 页";
+                font-family: 'AuditReportChinese';
+                font-size: 9px;
+                color: #64748b;
+            }
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            color: #1e293b;
+            font-family: 'AuditReportChinese';
+            font-size: 11px;
+            line-height: 1.6;
+        }
+        h1, h2, p {
+            margin: 0;
+        }
+        .header {
+            padding: 18px 20px;
+            color: #ffffff;
+            background: #163a5f;
+            border-bottom: 5px solid #2563eb;
+        }
+        .header h1 {
+            font-size: 24px;
+            letter-spacing: 2px;
+        }
+        .header p {
+            margin-top: 5px;
+            color: #dbeafe;
+        }
+        .meta {
+            width: 100%;
+            margin: 14px 0;
+            border-collapse: collapse;
+        }
+        .meta td {
+            width: 50%;
+            padding: 6px 9px;
+            border: 1px solid #cbd5e1;
+        }
+        .meta .label {
+            display: inline-block;
+            width: 72px;
+            color: #64748b;
+        }
+        .section {
+            margin-top: 16px;
+            page-break-inside: avoid;
+        }
+        .section h2 {
+            margin-bottom: 7px;
+            padding: 5px 9px;
+            color: #163a5f;
+            font-size: 14px;
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+        }
+        table.detail {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        table.detail th,
+        table.detail td {
+            padding: 6px 8px;
+            vertical-align: top;
+            border: 1px solid #cbd5e1;
+            word-wrap: break-word;
+        }
+        table.detail th {
+            width: 22%;
+            color: #475569;
+            text-align: left;
+            background: #f8fafc;
+        }
+        .description,
+        .narrative,
+        .recommendation {
+            padding: 10px 12px;
+            white-space: pre-wrap;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+        }
+        .recommendation {
+            color: #7c2d12;
+            background: #fff7ed;
+            border-color: #fdba74;
+        }
+        .narrative {
+            font-size: 12px;
+            line-height: 2;
+            text-align: justify;
+            background: #f8fafc;
+            border-left: 4px solid #2563eb;
+        }
+        .raw-fields {
+            font-size: 9px;
+        }
+        .raw-fields th {
+            width: 34%;
+        }
+        .footer {
+            margin-top: 18px;
+            padding-top: 8px;
+            color: #64748b;
+            font-size: 9px;
+            border-top: 1px solid #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>审计告警报告</h1>
+    <p>Kubernetes 安全审计 · 自动生成</p>
+</div>
+
+<table class="meta">
+    <tr>
+        <td><span class="label">报告编号</span><span th:text="${reportId}">AUD-UUID</span></td>
+        <td><span class="label">生成时间</span><span th:text="${generatedAt}">2026-01-01 00:00:00</span></td>
+    </tr>
+    <tr>
+        <td><span class="label">事件编号</span><span th:text="${eventId}">UUID</span></td>
+        <td><span class="label">数据来源</span><span>Falco / Kubernetes Audit</span></td>
+    </tr>
+</table>
+
+<div class="section">
+    <h2>一、事件报告摘要</h2>
+    <div class="narrative" th:text="${narrative}">系统检测到一项需要关注的 Kubernetes 审计操作。</div>
+</div>
+
+<div class="section">
+    <h2>二、告警概览</h2>
+    <table class="detail">
+        <tr><th>告警规则</th><td th:text="${rule}">规则</td></tr>
+        <tr><th>原始规则</th><td th:text="${ruleOriginal}">Rule</td></tr>
+        <tr><th>严重程度</th><td><span th:text="${priority}">严重</span>（<span th:text="${priorityOriginal}">Critical</span>）</td></tr>
+        <tr><th>发生时间</th><td th:text="${eventTime}">2026-01-01 00:00:00</td></tr>
+        <tr><th>问题说明</th><td th:text="${description}">审计告警说明</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>三、操作与鉴权信息</h2>
+    <table class="detail">
+        <tr><th>操作主体</th><td th:text="${subject}">用户</td></tr>
+        <tr><th>命名空间</th><td th:text="${namespace}">default</td></tr>
+        <tr><th>操作内容</th><td th:text="${operation}">create / pods</td></tr>
+        <tr><th>鉴权结果</th><td th:text="${decision}">allow</td></tr>
+        <tr><th>鉴权原因</th><td th:text="${reason}">原因</td></tr>
+        <tr><th>响应状态</th><td th:text="${responseCode}">200</td></tr>
+        <tr><th>来源主机</th><td th:text="${hostname}">hostname</td></tr>
+        <tr><th>事件标签</th><td th:text="${tags}">标签</td></tr>
+    </table>
+</div>
+
+<div class="section">
+    <h2>四、原始事件描述</h2>
+    <div class="description" th:text="${output}">Falco 原始事件描述</div>
+</div>
+
+<div class="section">
+    <h2>五、处置建议</h2>
+    <div class="recommendation" th:text="${recommendation}">建议复核该操作。</div>
+</div>
+
+<div class="section">
+    <h2>六、原始审计字段</h2>
+    <table class="detail raw-fields">
+        <thead>
+        <tr><th>字段</th><td>值</td></tr>
+        </thead>
+        <tbody>
+        <tr th:each="field : ${rawFields}">
+            <th th:text="${field.name}">ka.field</th>
+            <td th:text="${field.value}">value</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(rawFields)}">
+            <th>说明</th><td>无附加审计字段</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<p class="footer">本报告由 K8s Panel 根据审计告警自动生成，仅供安全审计和事件处置使用。</p>
+</body>
+</html>

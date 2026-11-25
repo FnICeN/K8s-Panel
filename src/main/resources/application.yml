@@ -38,6 +38,29 @@ oidc:
 cluster:
   cluster-url: http://localhost:6443
 
+# ClickHouse 审计数据源
+clickhouse:
+  url: http://localhost:8123
+  database: falco
+  username: default
+  password:
+
+# 审计告警实时推送
+audit:
+  # SSE 增量轮询间隔（毫秒）
+  poll-interval-ms: 3000
+  report:
+    # 新增审计告警是否自动生成 PDF
+    enabled: true
+    # 报告持久化目录；容器部署时应挂载持久卷
+    storage-dir: data/audit-reports
+    # 可选：中文 TTF/TTC/OTF 字体绝对路径，留空时探测常见系统字体
+    font-path:
+    # 报告保留天数；小于等于 0 时关闭自动清理
+    retention-days: 7
+    # 每天凌晨 02:00 清理过期报告
+    cleanup-cron: "0 0 2 * * *"
+
 # Log
 logging:
   charset:
