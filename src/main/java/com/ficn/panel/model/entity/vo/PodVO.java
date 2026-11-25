@@ -3,6 +3,7 @@ package com.ficn.panel.model.entity.vo;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class PodVO {
@@ -20,6 +21,20 @@ public class PodVO {
     @Data
     public static class SpecVO {
         private String nodeName;
+        private List<ContainerVO> containers;
+        private List<ContainerVO> initContainers;
+    }
+
+    @Data
+    public static class ContainerVO {
+        private String name;
+        private ResourceRequirementsVO resources;
+    }
+
+    @Data
+    public static class ResourceRequirementsVO {
+        private Map<String, String> requests;
+        private Map<String, String> limits;
     }
 
     @Data

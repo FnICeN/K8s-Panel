@@ -12,6 +12,8 @@ import java.util.List;
 final class K8sApiPaths {
 
     static final String NODES = "/api/v1/nodes";
+    static final String NODE_METRICS = "/apis/metrics.k8s.io/v1beta1/nodes";
+    static final String PODS = "/api/v1/pods";
     static final String NAMESPACES = "/api/v1/namespaces";
     static final String DEPLOYMENTS = "/apis/apps/v1/deployments";
 
@@ -20,6 +22,10 @@ final class K8sApiPaths {
 
     static String node(String nodeName) {
         return NODES + "/" + encodeRequired(nodeName, "nodeName");
+    }
+
+    static String nodeProxyStats(String nodeName) {
+        return node(nodeName) + "/proxy/stats/summary";
     }
 
     static String namespacePods(String namespace) {

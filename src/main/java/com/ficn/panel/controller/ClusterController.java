@@ -9,6 +9,7 @@ import com.ficn.panel.model.entity.User;
 import com.ficn.panel.model.entity.vo.DeploymentVO;
 import com.ficn.panel.model.entity.vo.EventVO;
 import com.ficn.panel.model.entity.vo.NamespaceVO;
+import com.ficn.panel.model.entity.vo.NodeMetricsVO;
 import com.ficn.panel.model.entity.vo.NodeVO;
 import com.ficn.panel.model.entity.vo.PodVO;
 import com.ficn.panel.model.entity.vo.ServiceVO;
@@ -48,6 +49,15 @@ public class ClusterController {
         K8sListResponse<NodeVO> nodes = nodeService.getNodes(user.getIdToken());
         ThrowUtils.throwIf(nodes == null, ErrorCode.OPERATION_ERROR, "获取节点列表失败");
         return ResultUtils.success(nodes);
+    }
+
+    @GetMapping("/node-metrics")
+    @Operation(summary = "获取所有节点实时资源用量")
+    public BaseResponse<K8sListResponse<NodeMetricsVO>> getNodeMetrics(HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        K8sListResponse<NodeMetricsVO> metrics = nodeService.getNodeMetrics(user.getIdToken());
+        return ResultUtils.success(metrics);
     }
 
     @GetMapping(value = "/nodes/{node_name}", produces = "application/json", params = "!all")

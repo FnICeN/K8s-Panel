@@ -13,6 +13,11 @@ public class PodApi {
 
     private final K8sHttpClient k8sHttpClient;
 
+    public K8sListResponse<PodVO> listAll(String token) {
+        return k8sHttpClient.get(token, K8sApiPaths.PODS, new ParameterizedTypeReference<>() {
+        });
+    }
+
     public K8sListResponse<PodVO> listByNamespace(String token, String namespace) {
         return k8sHttpClient.get(token, K8sApiPaths.namespacePods(namespace), new ParameterizedTypeReference<>() {
         });

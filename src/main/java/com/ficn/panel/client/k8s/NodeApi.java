@@ -1,7 +1,9 @@
 package com.ficn.panel.client.k8s;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.ficn.panel.model.dto.cluster.K8sListResponse;
 import com.ficn.panel.model.dto.cluster.NodeSpecResponse;
+import com.ficn.panel.model.entity.vo.NodeMetricsVO;
 import com.ficn.panel.model.entity.vo.NodeVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
@@ -16,6 +18,15 @@ public class NodeApi {
     public K8sListResponse<NodeVO> list(String token) {
         return k8sHttpClient.get(token, K8sApiPaths.NODES, new ParameterizedTypeReference<>() {
         });
+    }
+
+    public K8sListResponse<NodeMetricsVO> listMetrics(String token) {
+        return k8sHttpClient.get(token, K8sApiPaths.NODE_METRICS, new ParameterizedTypeReference<>() {
+        });
+    }
+
+    public JsonNode getStatsSummary(String token, String nodeName) {
+        return k8sHttpClient.get(token, K8sApiPaths.nodeProxyStats(nodeName), JsonNode.class);
     }
 
     public NodeSpecResponse get(String token, String nodeName) {

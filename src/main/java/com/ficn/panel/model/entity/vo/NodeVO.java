@@ -1,5 +1,6 @@
 package com.ficn.panel.model.entity.vo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
@@ -22,7 +23,18 @@ public class NodeVO {
     public static class NodeStatusVO {
         private List<ConditionVO> conditions;
         private List<AddressVO> addresses;
+        private CapacityVO capacity;
+        private CapacityVO allocatable;
         private NodeInfoVO nodeInfo;
+    }
+
+    @Data
+    public static class CapacityVO {
+        private String cpu;
+        private String memory;
+        private String pods;
+        @JsonProperty("ephemeral-storage")
+        private String ephemeralStorage;
     }
 
     @Data
