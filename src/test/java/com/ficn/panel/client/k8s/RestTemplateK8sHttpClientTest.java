@@ -62,6 +62,28 @@ class RestTemplateK8sHttpClientTest {
     }
 
     @Test
+    void postReturnsPolicyTriggerMessageForAppPolicyForbidden() {
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(PodSpecResponse.class)))
+                .thenThrow(forbidden("""
+                        {
+                          "kind": "Status",
+                          "apiVersion": "v1",
+                          "status": "Failure",
+                          "message": "admission webhook denied: 策略 1-2 触发",
+                          "reason": "Forbidden",
+                          "code": 403
+                        }
+                        """));
+
+        assertThatThrownBy(() -> k8sHttpClient.post("token", "/api/v1/namespaces/demo/pods",
+                Map.of("kind", "Pod"), PodSpecResponse.class))
+                .isInstanceOfSatisfying(BusinessException.class, e -> {
+                    assertThat(e.getCode()).isEqualTo(ErrorCode.FORBIDDEN_ERROR.getCode());
+                    assertThat(e.getMessage()).isEqualTo("策略 1-2 触发");
+                });
+    }
+
+    @Test
     void postKeepsOrdinaryForbiddenAsForbiddenError() {
         when(restTemplate.exchange(any(URI.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(PodSpecResponse.class)))
                 .thenThrow(forbidden("""

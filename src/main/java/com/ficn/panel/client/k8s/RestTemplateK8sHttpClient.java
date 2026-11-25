@@ -20,12 +20,16 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 @RequiredArgsConstructor
 public class RestTemplateK8sHttpClient implements K8sHttpClient {
 
     private static final MediaType YAML_MEDIA_TYPE = MediaType.valueOf("application/yaml");
+    private static final Pattern POLICY_TRIGGER_PATTERN =
+            Pattern.compile("策略\\s*(\\d+)\\s*-\\s*(\\d+)\\s*触发");
 
     private final RestTemplate restTemplate;
     private final ClusterPropertiesConfig clusterPropertiesConfig;
@@ -95,13 +99,22 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
             return new BusinessException(ErrorCode.NOT_LOGIN_ERROR, "Kubernetes token is invalid or expired");
         }
         if (e instanceof HttpClientErrorException.Forbidden forbidden) {
-            return gatekeeperDenyParser.parse(forbidden)
-                    .<BusinessException>map(challenge -> new GatekeeperReauthRequiredException(
-                            challenge.message(),
-                            challenge.scope(),
-                            challenge.authScopeEnum()))
-                    .orElseGet(() -> new BusinessException(ErrorCode.FORBIDDEN_ERROR,
-                            "No permission to access Kubernetes resource"));
+            var reauthChallenge = gatekeeperDenyParser.parse(forbidden);
+            if (reauthChallenge.isPresent()) {
+                var challenge = reauthChallenge.get();
+                return new GatekeeperReauthRequiredException(
+                        challenge.message(),
+                        challenge.scope(),
+                        challenge.authScopeEnum());
+            }
+
+            String policyTriggerMessage = extractPolicyTriggerMessage(forbidden.getResponseBodyAsString());
+            if (policyTriggerMessage != null) {
+                return new BusinessException(ErrorCode.FORBIDDEN_ERROR, policyTriggerMessage);
+            }
+
+            return new BusinessException(ErrorCode.FORBIDDEN_ERROR,
+                    "No permission to access Kubernetes resource");
         }
         if (e instanceof ResourceAccessException) {
             return new BusinessException(ErrorCode.OPERATION_ERROR, "Unable to connect Kubernetes API server");
@@ -112,6 +125,17 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
                     + restClientResponseException.getResponseBodyAsString());
         }
         return new BusinessException(ErrorCode.OPERATION_ERROR, "Kubernetes API response processing failed");
+    }
+
+    private String extractPolicyTriggerMessage(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return null;
+        }
+        Matcher matcher = POLICY_TRIGGER_PATTERN.matcher(responseBody);
+        if (!matcher.find()) {
+            return null;
+        }
+        return "策略 " + matcher.group(1) + "-" + matcher.group(2) + " 触发";
     }
 
     private HttpEntity<Object> buildEntity(String token, Object body, MediaType accept) {
