@@ -19,18 +19,32 @@
             @click="createResourceDialogRef?.open()"
           />
         </a-tooltip>
+        <a-tooltip title="上传 YAML 部署">
+          <a-button
+            class="create-button"
+            aria-label="上传 YAML 部署"
+            shape="circle"
+            :icon="h(UploadOutlined)"
+            @click="uploadResourceDialogRef?.open()"
+          />
+        </a-tooltip>
         <a-popover placement="bottomRight" trigger="hover" overlay-class-name="alert-popover">
           <template #content>
             <div class="alert-dropdown">
+              <a-empty
+                v-if="auditStore.alerts.length === 0"
+                :image="Empty.PRESENTED_IMAGE_SIMPLE"
+                description="暂无审计告警"
+              />
               <div
-                v-for="alert in mockAuditAlerts"
-                :key="alert.id"
+                v-for="alert in auditStore.alerts"
+                :key="alert.uuid"
                 class="alert-dropdown-item"
                 :class="getAlertPriorityClass(alert.priority)"
               >
                 <div class="alert-dropdown-title">
-                  <span>{{ alert.rule }}</span>
-                  <a-tag :color="getAlertPriorityColor(alert.priority)">
+                  <span>{{ alert.ruleCn || alert.rule }}</span>
+                  <a-tag :color="getPriorityColor(alert.priority)">
                     {{ alert.priority }}
                   </a-tag>
                 </div>
@@ -41,7 +55,7 @@
               </div>
             </div>
           </template>
-          <a-badge :count="mockAuditAlerts.length" class="alert-badge">
+          <a-badge :count="auditStore.count" class="alert-badge">
             <a-tooltip title="审计告警">
               <a-button
                 class="alert-button"
@@ -52,48 +66,83 @@
             </a-tooltip>
           </a-badge>
         </a-popover>
-        <a-button type="primary" @click="loginDialogRef?.open()">登录</a-button>
+        <a-button
+          v-if="isLoggedIn === true"
+          class="logout-button"
+          type="primary"
+          danger
+          :loading="loggingOut"
+          @click="handleLogout"
+        >
+          退出
+        </a-button>
+        <a-button v-else class="login-button" type="primary" @click="loginDialogRef?.open()">登录</a-button>
       </div>
     </a-layout-header>
     <a-layout>
-      <a-layout-sider width="200" style="background: #fff">
+      <a-layout-sider class="sider" width="310">
         <div class="logo" />
         <a-menu
           id="main-menu"
           v-model:openKeys="openKeys"
           v-model:selectedKeys="selectedKeys"
           mode="inline"
+          theme="dark"
           :items="items"
-          style="height: 100%; border-right: 0"
+          class="sider-menu"
           @click="handleClick"
         ></a-menu>
       </a-layout-sider>
       <a-layout>
         <a-layout-content
-          :style="{ margin: '24px 16px', padding: '24px', background: '#fff', minHeight: '280px' }"
+          class="main-content"
+          :class="{ 'home-content': route.path === '/', 'cluster-content': isClusterPage }"
         >
-          <RouterView />
+          <a-config-provider :theme="clusterTheme">
+            <RouterView />
+          </a-config-provider>
         </a-layout-content>
       </a-layout>
     </a-layout>
     <LoginDialog ref="loginDialogRef" />
     <CreateResourceDialog ref="createResourceDialogRef" />
+    <UploadResourceDialog ref="uploadResourceDialogRef" />
   </a-layout>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch, h, onMounted } from 'vue'
+import { computed, reactive, ref, watch, h, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter, useRoute } from 'vue-router'
-import { HomeOutlined, CheckCircleOutlined, PlusOutlined, BellOutlined } from '@ant-design/icons-vue'
-import type { MenuProps, ItemType } from 'ant-design-vue'
+import {
+  HomeOutlined,
+  CheckCircleOutlined,
+  PlusOutlined,
+  UploadOutlined,
+  BellOutlined,
+  DatabaseOutlined,
+  DashboardOutlined,
+  FundOutlined,
+} from '@ant-design/icons-vue'
+import { message, Modal, Empty, type MenuProps, type ItemType } from 'ant-design-vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import CreateResourceDialog from '@/components/CreateResourceDialog.vue'
-import { mockAuditAlerts, type AuditAlert, type AuditPriority } from '@/mocks/auditAlerts'
+import UploadResourceDialog from '@/components/UploadResourceDialog.vue'
+import type { AuditAlert, AuditPriority } from '@/api/auditController'
+import { getOutputField, getPriorityColor } from '@/utils/audit'
+import { getNodeDisplayName } from '@/utils/nodeDisplayName'
+import { useAuthStore } from '@/stores/auth'
+import { useAuditStore } from '@/stores/audit'
+import { logout } from '@/api/authController'
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
+const auditStore = useAuditStore()
+const { isLoggedIn } = storeToRefs(authStore)
 const loginDialogRef = ref<InstanceType<typeof LoginDialog> | null>(null)
 const createResourceDialogRef = ref<InstanceType<typeof CreateResourceDialog> | null>(null)
+const uploadResourceDialogRef = ref<InstanceType<typeof UploadResourceDialog> | null>(null)
 
 // 全局登录对话框触发函数
 if (typeof window !== 'undefined') {
@@ -101,6 +150,16 @@ if (typeof window !== 'undefined') {
     loginDialogRef.value?.show()
   }
 }
+
+const clusterPrefixes = ['/health', '/nodes', '/pods', '/deployments', '/namespaces', '/services']
+
+const isClusterPage = computed(() =>
+  clusterPrefixes.some((prefix) => route.path === prefix || route.path.startsWith(`${prefix}/`)),
+)
+
+const clusterTheme = computed(() =>
+  isClusterPage.value ? { token: { fontSize: 17 } } : undefined,
+)
 
 const selectedKeys = ref<string[]>(['/'])
 const openKeys = ref<string[]>([])
@@ -125,17 +184,50 @@ function getItem(
 const items: ItemType[] = reactive([
   getItem('首页', '/', () => h(HomeOutlined)),
   getItem('审计告警', '/audit-alerts', () => h(BellOutlined)),
-  getItem('集群管理', '/health', () => h(CheckCircleOutlined), [
-    getItem('节点管理', '/nodes'),
-    getItem('Pod管理', '/pods'),
-    getItem('Deployment管理', '/deployments'),
-    getItem('命名空间管理', '/namespaces'),
-    getItem('服务管理', '/services'),
+  getItem('天基云网管理', '/health', () => h(CheckCircleOutlined), [
+    getItem('星载计算节点管理（Node）', '/nodes'),
+    getItem('计算单元（Pod）', '/pods'),
+    getItem('计算单元部署控制器（Deployment）', '/deployments'),
+    getItem('命名空间管理（Namespace）', '/namespaces'),
+    getItem('服务发现（Service）', '/services'),
   ]),
+  getItem('备份管理', '/backup', () => h(DatabaseOutlined)),
+  getItem('云网监控仪表盘', '/dashboard', () => h(FundOutlined)),
+  getItem('监控告警管理', '/monitor', () => h(DashboardOutlined)),
 ])
 
+const loggingOut = ref(false)
+
+const doLogout = async () => {
+  loggingOut.value = true
+  try {
+    const response = await logout()
+    // 无论后端是否仍持有会话，前端都切回未登录态
+    authStore.setLoggedIn(false)
+    if (response.data.code === 0) {
+      message.success('已退出登录')
+    }
+  } catch (error) {
+    console.error('退出登录失败:', error)
+    authStore.setLoggedIn(false)
+    message.error('退出登录失败')
+  } finally {
+    loggingOut.value = false
+  }
+}
+
+const handleLogout = () => {
+  Modal.confirm({
+    title: '确认退出',
+    content: '退出后需要重新登录才能继续操作，确定退出吗？',
+    okText: '退出',
+    okType: 'danger',
+    cancelText: '取消',
+    onOk: () => doLogout(),
+  })
+}
+
 const handleClick: MenuProps['onClick'] = (e) => {
-  console.log('click', e)
   router.push(e.key.toString())
 }
 
@@ -143,28 +235,16 @@ function goToAuditAlerts() {
   router.push('/audit-alerts')
 }
 
-function getAlertPriorityColor(priority: AuditPriority) {
-  if (priority === 'Critical' || priority === 'Error') return 'red'
-  if (priority === 'Warning') return 'orange'
-  return 'blue'
-}
-
 function getAlertPriorityClass(priority: AuditPriority) {
-  return `alert-${getAlertPriorityColor(priority)}`
-}
-
-function getAlertOutputField(alert: AuditAlert, field: string) {
-  const value = alert.output_fields[field]
-  if (Array.isArray(value)) return value.join(', ')
-  return value ?? '-'
+  return `alert-${getPriorityColor(priority)}`
 }
 
 function getAlertNamespace(alert: AuditAlert) {
-  return getAlertOutputField(alert, 'ka.target.namespace')
+  return alert.namespace || getOutputField(alert.outputFields, 'ka.target.namespace')
 }
 
 function getAlertResource(alert: AuditAlert) {
-  return `${getAlertOutputField(alert, 'ka.target.resource')}/${getAlertOutputField(alert, 'ka.target.name')}`
+  return `${getOutputField(alert.outputFields, 'ka.target.resource')}/${getOutputField(alert.outputFields, 'ka.target.name')}`
 }
 
 onMounted(() => {
@@ -173,6 +253,11 @@ onMounted(() => {
   updateOpenKeys(route.path)
   // 更新面包屑
   updateBreadcrumb(route.path)
+  // 首次进入时路由守卫早于弹窗挂载，此处补弹登录对话框
+  authStore.consumePendingLoginDialog()
+  // 加载审计告警并建立实时推送
+  auditStore.init()
+  auditStore.connect()
 })
 
 watch(
@@ -208,17 +293,17 @@ function updateBreadcrumb(path: string) {
   if (path === '/') items.push({ title: '首页', path: '/' })
 
   if (path.startsWith('/nodes')) {
-    items.push({ title: '集群管理', path: '/' })
-    items.push({ title: '节点管理', path: '/nodes' })
+    items.push({ title: '天基云网管理', path: '/' })
+    items.push({ title: '星载计算节点管理（Node）', path: '/nodes' })
 
     // 处理节点详情页
     const match = path.match(/\/nodes\/(.*)/)
     if (match && match[1]) {
-      items.push({ title: match[1] })
+      items.push({ title: getNodeDisplayName(decodeURIComponent(match[1])) })
     }
   } else if (path.startsWith('/pods')) {
-    items.push({ title: '集群管理', path: '/' })
-    items.push({ title: 'Pod管理', path: '/pods' })
+    items.push({ title: '天基云网管理', path: '/' })
+    items.push({ title: '计算单元（Pod）', path: '/pods' })
 
     // 处理Pod详情页
     const match = path.match(/\/pods\/([^/]+)\/(.*)/)
@@ -226,23 +311,29 @@ function updateBreadcrumb(path: string) {
       items.push({ title: match[2] })
     }
   } else if (path.startsWith('/namespaces')) {
-    items.push({ title: '集群管理', path: '/' })
-    items.push({ title: '命名空间管理', path: '/namespaces' })
+    items.push({ title: '天基云网管理', path: '/' })
+    items.push({ title: '命名空间管理（Namespace）', path: '/namespaces' })
   } else if (path.startsWith('/deployments')) {
-    items.push({ title: '集群管理', path: '/' })
-    items.push({ title: 'Deployment管理', path: '/deployments' })
+    items.push({ title: '天基云网管理', path: '/' })
+    items.push({ title: '计算单元部署控制器（Deployment）', path: '/deployments' })
 
     const match = path.match(/\/deployments\/([^/]+)\/(.*)/)
     if (match && match[2]) {
       items.push({ title: match[2] })
     }
   } else if (path.startsWith('/services')) {
-    items.push({ title: '集群管理', path: '/' })
-    items.push({ title: '服务管理', path: '/services' })
+    items.push({ title: '天基云网管理', path: '/' })
+    items.push({ title: '服务发现（Service）', path: '/services' })
   } else if (path === '/audit-alerts') {
     items.push({ title: '审计告警', path: '/audit-alerts' })
+  } else if (path === '/backup') {
+    items.push({ title: '备份管理', path: '/backup' })
+  } else if (path === '/dashboard') {
+    items.push({ title: '云网监控仪表盘', path: '/dashboard' })
+  } else if (path === '/monitor') {
+    items.push({ title: '监控告警管理', path: '/monitor' })
   } else if (path === '/health') {
-    items.push({ title: '集群管理', path: '/health' })
+    items.push({ title: '天基云网管理', path: '/health' })
   }
 
   breadcrumbItems.value = items
@@ -259,14 +350,49 @@ function updateBreadcrumb(path: string) {
   min-height: 100vh;
 }
 
+.main-content {
+  min-height: 280px;
+  margin: 24px 16px;
+  padding: 24px;
+  background: #fff;
+}
+
+.main-content.home-content {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  background: #071422;
+}
+
+.main-content.cluster-content {
+  font-size: 17px;
+}
+
+.main-content.cluster-content :deep(.ant-table),
+.main-content.cluster-content :deep(.ant-pagination),
+.main-content.cluster-content :deep(.ant-tag),
+.main-content.cluster-content :deep(.ant-btn),
+.main-content.cluster-content :deep(.ant-select),
+.main-content.cluster-content :deep(.ant-input),
+.main-content.cluster-content :deep(.ant-tabs-tab),
+.main-content.cluster-content :deep(.ant-card-body),
+.main-content.cluster-content :deep(.ant-empty) {
+  font-size: 17px;
+}
+
+.main-content.cluster-content :deep(.ant-card-head-title) {
+  font-size: 20px;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
-  background: #001529;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(98, 196, 230, 0.16);
+  background: linear-gradient(180deg, #10283f 0%, #0b1d31 100%);
+  color: #e9f6ff;
+  box-shadow: 0 1px 0 rgba(120, 210, 255, 0.06);
 }
 
 .header-left {
@@ -277,12 +403,13 @@ function updateBreadcrumb(path: string) {
 
 .platform-name {
   margin: 0;
-  font-size: 18px;
+  font-size: 26px;
   font-weight: 600;
 }
 
 .breadcrumb {
   margin: 0;
+  font-size: 19px;
 }
 
 .breadcrumb .ant-breadcrumb-link a {
@@ -305,18 +432,34 @@ function updateBreadcrumb(path: string) {
   display: flex;
   align-items: center;
   gap: 12px;
+  font-size: 19px;
+}
+
+.header :deep(.ant-btn) {
+  font-size: 19px;
+}
+
+.logout-button {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+}
+
+.logout-button:hover,
+.logout-button:focus {
+  background: #ff7875;
+  border-color: #ff7875;
 }
 
 .create-button {
-  border-color: rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  border-color: rgba(126, 214, 242, 0.32);
+  background: rgba(10, 36, 58, 0.55);
+  color: #dff6ff;
 }
 
 .create-button:hover,
 .create-button:focus {
-  border-color: #69b1ff;
-  background: #1677ff;
+  border-color: rgba(126, 214, 242, 0.7);
+  background: rgba(22, 64, 96, 0.85);
   color: #fff;
 }
 
@@ -329,15 +472,29 @@ function updateBreadcrumb(path: string) {
 }
 
 .alert-button {
-  border-color: rgba(255, 255, 255, 0.45);
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  border-color: rgba(126, 214, 242, 0.32);
+  background: rgba(10, 36, 58, 0.55);
+  color: #dff6ff;
 }
 
 .alert-button:hover,
 .alert-button:focus {
-  border-color: #69b1ff;
-  background: #1677ff;
+  border-color: rgba(126, 214, 242, 0.7);
+  background: rgba(22, 64, 96, 0.85);
+  color: #fff;
+}
+
+.header :deep(.login-button.ant-btn-primary) {
+  border-color: rgba(126, 214, 242, 0.45);
+  background: rgba(18, 58, 88, 0.85);
+  box-shadow: none;
+  color: #e9f7ff;
+}
+
+.header :deep(.login-button.ant-btn-primary:hover),
+.header :deep(.login-button.ant-btn-primary:focus) {
+  border-color: rgba(150, 226, 255, 0.75);
+  background: rgba(28, 82, 120, 0.95);
   color: #fff;
 }
 
@@ -400,9 +557,74 @@ function updateBreadcrumb(path: string) {
   -webkit-line-clamp: 2;
 }
 
+.sider {
+  border-right: 1px solid rgba(98, 196, 230, 0.12);
+  background: linear-gradient(180deg, #0c2238 0%, #071422 100%);
+}
+
+.sider :deep(.ant-layout-sider-children) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sider-menu {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border-right: 0;
+  background: transparent;
+  color: rgba(214, 236, 248, 0.82);
+}
+
+.sider :deep(.ant-menu) {
+  background: transparent;
+  color: rgba(214, 236, 248, 0.82);
+}
+
+.sider :deep(.ant-menu-item),
+.sider :deep(.ant-menu-submenu-title) {
+  height: auto;
+  min-height: 54px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  color: rgba(214, 236, 248, 0.78);
+  font-size: 19px;
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.sider :deep(.ant-menu-title-content) {
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.sider :deep(.ant-menu-item .anticon),
+.sider :deep(.ant-menu-submenu-title .anticon) {
+  font-size: 21px;
+}
+
+.sider :deep(.ant-menu-item:hover),
+.sider :deep(.ant-menu-submenu-title:hover) {
+  background: rgba(90, 190, 235, 0.16) !important;
+  color: #fff;
+}
+
+.sider :deep(.ant-menu-item-selected) {
+  background: rgba(72, 186, 230, 0.16) !important;
+  box-shadow: inset 3px 0 0 #67d6ff;
+  color: #fff;
+}
+
+.sider :deep(.ant-menu-sub.ant-menu-inline) {
+  background: rgba(6, 24, 46, 0.45) !important;
+}
+
 .logo {
-  height: 32px;
-  margin: 16px;
-  background: rgba(255, 255, 255, 0.3);
+  height: 2px;
+  margin: 16px 18px 8px;
+  border: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(110, 214, 255, 0.72), transparent);
 }
 </style>
