@@ -32,6 +32,13 @@ oidc:
 # 集群配置
 cluster:
   cluster-url: http://localhost:6443
+  
+# ClickHouse 审计数据源
+clickhouse:
+  url: http://localhost:8123
+  database: falco
+  username: default
+  password: xxx
 ```
 
 ## 启动Redis
@@ -39,6 +46,7 @@ cluster:
 本项目启用了基于Redis的分布式Session，因此需要启动本地的Redis进程：
 
 ```bash
+cd /your/redis/path
 redis-server.exe
 ```
 
@@ -60,6 +68,7 @@ java -jar panel-0.0.1-SNAPSHOT.jar
 
 ```bash
 cd panel-frontend
+npm install
 npm run dev
 ```
 
