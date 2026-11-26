@@ -339,7 +339,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 
 .status-label {
   font-size: 17px;
-  color: #666;
+  color: var(--app-text-secondary);
 }
 
 .status-value {
@@ -366,7 +366,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 
 .info-label {
   font-size: 17px;
-  color: #666;
+  color: var(--app-text-secondary);
 }
 
 .info-value {
@@ -409,14 +409,14 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 }
 
 .container-image {
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 17px;
 }
 
 .tab-placeholder {
   padding: 48px 0;
   text-align: center;
-  color: #999;
+  color: var(--app-text-muted);
   font-size: 19px;
 }
 
@@ -427,7 +427,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 .yaml-textarea {
   font-family: 'Courier New', Courier, monospace;
   line-height: 1.5;
-  color: #333;
+  color: var(--app-text);
 }
 
 .containers-content {
@@ -466,7 +466,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 
 .detail-label {
   font-size: 17px;
-  color: #666;
+  color: var(--app-text-secondary);
 }
 
 .detail-value {
@@ -497,7 +497,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 }
 
 .port-name {
-  color: #666;
+  color: var(--app-text-secondary);
 }
 
 .port-number {
@@ -505,7 +505,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 }
 
 .arg-item {
-  background: #f5f5f5;
+  background: var(--app-surface-muted);
   padding: 4px 8px;
   border-radius: 4px;
   font-family: monospace;
@@ -518,7 +518,7 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 }
 
 .state-time {
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 17px;
 }
 

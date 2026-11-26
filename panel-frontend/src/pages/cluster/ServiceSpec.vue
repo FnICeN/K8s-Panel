@@ -296,7 +296,7 @@ const getPortsText = () => {
 
 .namespace-line {
   margin-top: 4px;
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 17px;
 }
 
@@ -331,7 +331,7 @@ const getPortsText = () => {
 
 .info-label {
   font-size: 17px;
-  color: #666;
+  color: var(--app-text-secondary);
 }
 
 .info-value {
@@ -341,7 +341,7 @@ const getPortsText = () => {
 }
 
 .port-link {
-  color: #1677ff;
+  color: var(--app-accent);
 }
 
 .tag-list {
@@ -353,7 +353,7 @@ const getPortsText = () => {
 .tab-placeholder {
   padding: 48px 0;
   text-align: center;
-  color: #999;
+  color: var(--app-text-muted);
   font-size: 19px;
 }
 
@@ -364,6 +364,6 @@ const getPortsText = () => {
 .yaml-textarea {
   font-family: 'Courier New', Courier, monospace;
   line-height: 1.5;
-  color: #333;
+  color: var(--app-text);
 }
 </style>

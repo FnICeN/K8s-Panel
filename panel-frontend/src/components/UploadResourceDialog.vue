@@ -226,7 +226,7 @@ defineExpose({
 
 .dialog-description {
   margin: -4px 0 0;
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -236,22 +236,22 @@ defineExpose({
   grid-template-columns: 1fr 1fr;
   gap: 8px 16px;
   padding: 12px 14px;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--app-border-soft);
   border-radius: 6px;
-  background: #fafafa;
+  background: var(--app-surface-muted);
 }
 
 .summary-row {
   display: flex;
   gap: 8px;
   min-width: 0;
-  color: #1f1f1f;
+  color: var(--app-text);
   font-size: 14px;
 }
 
 .summary-row span {
   flex: none;
-  color: #8c8c8c;
+  color: var(--app-text-muted);
 }
 
 .summary-row strong {
@@ -266,10 +266,10 @@ defineExpose({
   margin: 0;
   padding: 12px;
   overflow: auto;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--app-border);
   border-radius: 6px;
-  background: #fff;
-  color: #1f1f1f;
+  background: var(--app-surface);
+  color: var(--app-text);
   font-family: Consolas, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.6;

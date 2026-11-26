@@ -699,7 +699,7 @@ const formatContainerPorts = (container: Container) => {
 
 .namespace-line {
   margin-top: 6px;
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 17px;
 }
 
@@ -741,7 +741,7 @@ const formatContainerPorts = (container: Container) => {
 
 .status-label,
 .info-label {
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 16px;
 }
 
@@ -760,11 +760,11 @@ const formatContainerPorts = (container: Container) => {
 .yaml-textarea {
   font-family: 'Courier New', Courier, monospace;
   line-height: 1.5;
-  color: #333;
+  color: var(--app-text);
 }
 
 .logs-panel {
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--app-border-soft);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -772,7 +772,7 @@ const formatContainerPorts = (container: Container) => {
 .logs-toolbar {
   justify-content: flex-end;
   padding: 12px;
-  background: #fff;
+  background: var(--app-surface);
 }
 
 .logs-search {

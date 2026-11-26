@@ -58,7 +58,7 @@ const handleNodeClick = (node: NodeTableRow) => {
   router.push(`/nodes/${node.metadata.name}`)
 }
 
-const getNodeStatus = (node: NodeTableRow) => {
+const getNodeStatus = (node: NodeTableRow): string => {
   if (node.isGroup) {
     const children = node.children || []
     const ready = children.filter((child) => getNodeStatus(child) === 'Ready').length

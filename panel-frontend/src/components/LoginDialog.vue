@@ -200,7 +200,7 @@ defineExpose({
 
 .label {
   font-weight: 500;
-  color: #666;
+  color: var(--app-text-secondary);
   flex-shrink: 0;
 }
 
@@ -211,13 +211,13 @@ defineExpose({
 .user-code {
   font-size: 18px;
   font-weight: bold;
-  color: #1890ff;
+  color: var(--app-accent);
   letter-spacing: 2px;
 }
 
 .auth-link {
   word-break: break-all;
-  color: #1890ff;
+  color: var(--app-accent);
 }
 
 .button-group {
@@ -230,10 +230,10 @@ defineExpose({
 .tips {
   margin-top: 16px;
   padding: 12px;
-  background: #f5f5f5;
+  background: var(--app-surface-muted);
   border-radius: 4px;
   font-size: 12px;
-  color: #666;
+  color: var(--app-text-secondary);
 }
 
 .tips p {
@@ -248,6 +248,6 @@ defineExpose({
 .loading-section {
   text-align: center;
   padding: 60px 0;
-  color: #999;
+  color: var(--app-text-muted);
 }
 </style>

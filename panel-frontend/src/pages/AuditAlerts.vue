@@ -500,9 +500,10 @@ onMounted(() => {
   gap: 24px;
   margin-bottom: 18px;
   padding: 22px 24px;
-  color: #fff;
-  background: linear-gradient(135deg, #1677ff, #102a43);
-  border-radius: 8px;
+  color: var(--app-text);
+  background: var(--app-accent-soft);
+  border: 1px solid var(--app-accent-border);
+  border-radius: 4px;
 }
 
 .alert-hero-main h2 {
@@ -513,21 +514,21 @@ onMounted(() => {
 
 .alert-hero-main p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--app-text-secondary);
 }
 
 .latest-alert {
   min-width: 260px;
   padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 8px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-accent-border);
+  border-radius: 4px;
 }
 
 .latest-alert span,
 .latest-alert small {
   display: block;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--app-text-muted);
 }
 
 .latest-alert strong {
@@ -547,10 +548,9 @@ onMounted(() => {
   position: relative;
   padding: 16px 18px;
   overflow: hidden;
-  background: #fff;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-soft);
+  border-radius: 4px;
 }
 
 .severity-card::before {
@@ -560,12 +560,12 @@ onMounted(() => {
   width: 4px;
   height: 100%;
   content: '';
-  background: #1677ff;
+  background: #409eff;
 }
 
 .severity-card span {
   display: block;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--app-text-muted);
 }
 
 .severity-card strong {
@@ -576,23 +576,23 @@ onMounted(() => {
 }
 
 .severity-red::before {
-  background: #ff4d4f;
+  background: #f56c6c;
 }
 
 .severity-orange::before {
-  background: #fa8c16;
+  background: #e6a23c;
 }
 
 .severity-blue::before,
 .severity-total::before {
-  background: #1677ff;
+  background: #409eff;
 }
 
 .audit-tabs {
   padding: 0 18px 18px;
-  background: #fff;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-soft);
+  border-radius: 4px;
 }
 
 .filter-bar {
@@ -617,12 +617,12 @@ onMounted(() => {
 }
 
 .report-toolbar span {
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--app-text-muted);
   font-size: 12px;
 }
 
 .report-id {
-  color: #1677ff;
+  color: var(--app-accent);
   font-family: Consolas, monospace;
   font-size: 12px;
 }
@@ -636,8 +636,8 @@ onMounted(() => {
 .alert-table {
   max-width: 100%;
   overflow: hidden;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
+  border: 1px solid var(--app-border-soft);
+  border-radius: 4px;
 }
 
 :deep(.alert-table .ant-table table) {
@@ -645,15 +645,15 @@ onMounted(() => {
 }
 
 :deep(.alert-row-red td:first-child) {
-  border-left: 4px solid #ff4d4f;
+  border-left: 4px solid #f56c6c;
 }
 
 :deep(.alert-row-orange td:first-child) {
-  border-left: 4px solid #fa8c16;
+  border-left: 4px solid #e6a23c;
 }
 
 :deep(.alert-row-blue td:first-child) {
-  border-left: 4px solid #1677ff;
+  border-left: 4px solid #409eff;
 }
 
 :deep(.ant-table-cell) {
@@ -676,7 +676,7 @@ onMounted(() => {
 .rule-cell span {
   display: -webkit-box;
   overflow: hidden;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--app-text-muted);
   font-size: 12px;
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -695,15 +695,15 @@ onMounted(() => {
 
 .detail-output {
   padding: 12px 14px;
-  background: #f8fbff;
-  border: 1px solid #d6e4ff;
+  background: var(--app-accent-soft);
+  border: 1px solid var(--app-accent-border);
   border-radius: 6px;
 }
 
 .detail-output span {
   display: block;
   margin-bottom: 6px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--app-text-muted);
   font-size: 12px;
 }
 
@@ -728,7 +728,7 @@ onMounted(() => {
 }
 
 .detail-danger {
-  color: #cf1322;
+  color: #f56c6c;
   font-weight: 600;
 }
 

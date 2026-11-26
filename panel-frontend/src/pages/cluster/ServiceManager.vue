@@ -205,7 +205,7 @@ const filterNamespaceOption = (input: string, option: any) => {
 }
 
 .namespace-label {
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 17px;
   white-space: nowrap;
 }

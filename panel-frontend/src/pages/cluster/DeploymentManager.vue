@@ -232,7 +232,7 @@ const getDeploymentStatusColor = (deployment: DeploymentListItem) => {
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 17px;
 }
 

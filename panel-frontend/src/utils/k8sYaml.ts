@@ -54,7 +54,7 @@ function readTopLevel(yaml: string, field: string): string | undefined {
     if (!match) {
       continue
     }
-    return cleanScalar(match[1])
+    return cleanScalar(match[1] ?? '')
   }
   return undefined
 }
@@ -84,7 +84,7 @@ function readMetadata(yaml: string, field: 'name' | 'namespace'): string | undef
     }
     const match = line.trim().match(new RegExp(`^${field}:\\s*(.*)$`))
     if (match) {
-      return cleanScalar(match[1])
+      return cleanScalar(match[1] ?? '')
     }
   }
   return undefined

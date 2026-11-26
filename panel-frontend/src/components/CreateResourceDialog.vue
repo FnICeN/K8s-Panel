@@ -172,7 +172,7 @@ defineExpose({
 
 .dialog-description {
   margin: -4px 0 2px;
-  color: #666;
+  color: var(--app-text-secondary);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -184,7 +184,7 @@ defineExpose({
 }
 
 .form-label {
-  color: #1f1f1f;
+  color: var(--app-text);
   font-size: 14px;
   font-weight: 600;
 }
@@ -198,20 +198,20 @@ defineExpose({
   grid-template-columns: 58px minmax(0, 1fr);
   height: clamp(300px, 44vh, 460px);
   overflow: hidden;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--app-border);
   border-radius: 6px;
-  background: #fff;
+  background: var(--app-surface);
 }
 
 .line-number-panel {
   overflow: hidden;
   border-right: 1px solid #ececec;
-  background: #fafafa;
+  background: var(--app-surface-muted);
 }
 
 .line-number-inner {
   padding: 10px 0;
-  color: #36558f;
+  color: var(--app-accent);
   font-family: Consolas, 'Courier New', monospace;
   font-size: 14px;
   line-height: 22px;
@@ -231,7 +231,7 @@ defineExpose({
   border: 0;
   outline: none;
   resize: none;
-  color: #1f1f1f;
+  color: var(--app-text);
   font-family: Consolas, 'Courier New', monospace;
   font-size: 14px;
   line-height: 22px;
@@ -239,7 +239,7 @@ defineExpose({
 }
 
 .yaml-textarea::placeholder {
-  color: #bfbfbf;
+  color: var(--app-text-muted);
 }
 
 .dialog-footer {

@@ -11,6 +11,12 @@
         </a-breadcrumb>
       </div>
       <div class="header-right">
+        <a-button
+          class="theme-button"
+          :aria-label="colorMode === 'dark' ? '切换至浅色模式' : '切换至深色模式'"
+          :aria-pressed="colorMode === 'dark'"
+          @click="toggleTheme"
+        >{{ colorMode === 'dark' ? '浅色模式' : '深色模式' }}</a-button>
         <a-tooltip title="创建资源">
           <a-button
             class="create-button"
@@ -87,7 +93,7 @@
           v-model:openKeys="openKeys"
           v-model:selectedKeys="selectedKeys"
           mode="inline"
-          theme="dark"
+          :theme="colorMode"
           :items="items"
           class="sider-menu"
           @click="handleClick"
@@ -98,15 +104,24 @@
           class="main-content"
           :class="{ 'home-content': route.path === '/', 'cluster-content': isClusterPage }"
         >
-          <a-config-provider :theme="clusterTheme">
-            <RouterView />
-          </a-config-provider>
+          <RouterView />
         </a-layout-content>
       </a-layout>
     </a-layout>
     <LoginDialog ref="loginDialogRef" />
     <CreateResourceDialog ref="createResourceDialogRef" />
     <UploadResourceDialog ref="uploadResourceDialogRef" />
+    <a-modal
+      v-model:open="logoutConfirmOpen"
+      title="确认退出"
+      ok-text="退出"
+      ok-type="danger"
+      cancel-text="取消"
+      :confirm-loading="loggingOut"
+      @ok="doLogout"
+    >
+      退出后需要重新登录才能继续操作，确定退出吗？
+    </a-modal>
   </a-layout>
 </template>
 
@@ -124,7 +139,7 @@ import {
   DashboardOutlined,
   FundOutlined,
 } from '@ant-design/icons-vue'
-import { message, Modal, Empty, type MenuProps, type ItemType } from 'ant-design-vue'
+import { message, Empty, type MenuProps, type ItemType } from 'ant-design-vue'
 import LoginDialog from '@/components/LoginDialog.vue'
 import CreateResourceDialog from '@/components/CreateResourceDialog.vue'
 import UploadResourceDialog from '@/components/UploadResourceDialog.vue'
@@ -134,12 +149,14 @@ import { getNodeDisplayName } from '@/utils/nodeDisplayName'
 import { useAuthStore } from '@/stores/auth'
 import { useAuditStore } from '@/stores/audit'
 import { logout } from '@/api/authController'
+import { useTheme } from '@/composables/useTheme'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const auditStore = useAuditStore()
 const { isLoggedIn } = storeToRefs(authStore)
+const { colorMode, toggleTheme } = useTheme()
 const loginDialogRef = ref<InstanceType<typeof LoginDialog> | null>(null)
 const createResourceDialogRef = ref<InstanceType<typeof CreateResourceDialog> | null>(null)
 const uploadResourceDialogRef = ref<InstanceType<typeof UploadResourceDialog> | null>(null)
@@ -155,10 +172,6 @@ const clusterPrefixes = ['/health', '/nodes', '/pods', '/deployments', '/namespa
 
 const isClusterPage = computed(() =>
   clusterPrefixes.some((prefix) => route.path === prefix || route.path.startsWith(`${prefix}/`)),
-)
-
-const clusterTheme = computed(() =>
-  isClusterPage.value ? { token: { fontSize: 17 } } : undefined,
 )
 
 const selectedKeys = ref<string[]>(['/'])
@@ -197,6 +210,7 @@ const items: ItemType[] = reactive([
 ])
 
 const loggingOut = ref(false)
+const logoutConfirmOpen = ref(false)
 
 const doLogout = async () => {
   loggingOut.value = true
@@ -213,18 +227,12 @@ const doLogout = async () => {
     message.error('退出登录失败')
   } finally {
     loggingOut.value = false
+    logoutConfirmOpen.value = false
   }
 }
 
 const handleLogout = () => {
-  Modal.confirm({
-    title: '确认退出',
-    content: '退出后需要重新登录才能继续操作，确定退出吗？',
-    okText: '退出',
-    okType: 'danger',
-    cancelText: '取消',
-    onOk: () => doLogout(),
-  })
+  logoutConfirmOpen.value = true
 }
 
 const handleClick: MenuProps['onClick'] = (e) => {
@@ -340,21 +348,19 @@ function updateBreadcrumb(path: string) {
 }
 </script>
 
-<style>
-.ant-breadcrumb .ant-breadcrumb-separator {
-  color: #fff !important;
-}
-</style>
 <style scoped>
 .basic-layout {
   min-height: 100vh;
+  background: var(--app-bg);
 }
 
 .main-content {
   min-height: 280px;
   margin: 24px 16px;
   padding: 24px;
-  background: #fff;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border-soft);
+  border-radius: 4px;
 }
 
 .main-content.home-content {
@@ -362,26 +368,8 @@ function updateBreadcrumb(path: string) {
   margin: 0;
   padding: 0;
   background: #071422;
-}
-
-.main-content.cluster-content {
-  font-size: 17px;
-}
-
-.main-content.cluster-content :deep(.ant-table),
-.main-content.cluster-content :deep(.ant-pagination),
-.main-content.cluster-content :deep(.ant-tag),
-.main-content.cluster-content :deep(.ant-btn),
-.main-content.cluster-content :deep(.ant-select),
-.main-content.cluster-content :deep(.ant-input),
-.main-content.cluster-content :deep(.ant-tabs-tab),
-.main-content.cluster-content :deep(.ant-card-body),
-.main-content.cluster-content :deep(.ant-empty) {
-  font-size: 17px;
-}
-
-.main-content.cluster-content :deep(.ant-card-head-title) {
-  font-size: 20px;
+  border: 0;
+  border-radius: 0;
 }
 
 .header {
@@ -389,10 +377,11 @@ function updateBreadcrumb(path: string) {
   justify-content: space-between;
   align-items: center;
   padding: 0 24px;
-  border-bottom: 1px solid rgba(98, 196, 230, 0.16);
-  background: linear-gradient(180deg, #10283f 0%, #0b1d31 100%);
-  color: #e9f6ff;
-  box-shadow: 0 1px 0 rgba(120, 210, 255, 0.06);
+  height: 64px;
+  line-height: normal;
+  border-bottom: 1px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
 }
 
 .header-left {
@@ -403,64 +392,58 @@ function updateBreadcrumb(path: string) {
 
 .platform-name {
   margin: 0;
-  font-size: 26px;
+  font-size: 20px;
   font-weight: 600;
 }
 
 .breadcrumb {
   margin: 0;
-  font-size: 19px;
+  font-size: 14px;
 }
 
-.breadcrumb .ant-breadcrumb-link a {
-  color: rgba(255, 255, 255, 0.85);
+.breadcrumb :deep(.ant-breadcrumb-link a) {
+  color: var(--app-text-secondary);
 }
 
-.breadcrumb .ant-breadcrumb-link a:hover {
-  color: #fff;
+.breadcrumb :deep(.ant-breadcrumb-link a:hover) {
+  color: var(--app-accent);
 }
 
 :deep(.breadcrumb .ant-breadcrumb-separator) {
-  color: #fff !important;
-}
-
-:deep(.ant-breadcrumb .ant-breadcrumb-separator) {
-  color: #fff !important;
+  color: var(--app-text-muted);
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 19px;
+  line-height: 1;
 }
 
 .header :deep(.ant-btn) {
-  font-size: 19px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  line-height: 1;
+  font-size: 14px;
+  vertical-align: middle;
 }
 
-.logout-button {
-  background: #ff4d4f;
-  border-color: #ff4d4f;
+.header :deep(.ant-btn .anticon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
-.logout-button:hover,
-.logout-button:focus {
-  background: #ff7875;
-  border-color: #ff7875;
+.header :deep(.ant-btn > span) {
+  line-height: 1;
 }
 
-.create-button {
-  border-color: rgba(126, 214, 242, 0.32);
-  background: rgba(10, 36, 58, 0.55);
-  color: #dff6ff;
-}
-
-.create-button:hover,
-.create-button:focus {
-  border-color: rgba(126, 214, 242, 0.7);
-  background: rgba(22, 64, 96, 0.85);
-  color: #fff;
+.create-button,
+.alert-button {
+  color: var(--app-text-secondary);
 }
 
 .alert-badge {
@@ -471,33 +454,6 @@ function updateBreadcrumb(path: string) {
   box-shadow: none;
 }
 
-.alert-button {
-  border-color: rgba(126, 214, 242, 0.32);
-  background: rgba(10, 36, 58, 0.55);
-  color: #dff6ff;
-}
-
-.alert-button:hover,
-.alert-button:focus {
-  border-color: rgba(126, 214, 242, 0.7);
-  background: rgba(22, 64, 96, 0.85);
-  color: #fff;
-}
-
-.header :deep(.login-button.ant-btn-primary) {
-  border-color: rgba(126, 214, 242, 0.45);
-  background: rgba(18, 58, 88, 0.85);
-  box-shadow: none;
-  color: #e9f7ff;
-}
-
-.header :deep(.login-button.ant-btn-primary:hover),
-.header :deep(.login-button.ant-btn-primary:focus) {
-  border-color: rgba(150, 226, 255, 0.75);
-  background: rgba(28, 82, 120, 0.95);
-  color: #fff;
-}
-
 .alert-dropdown {
   width: 360px;
   max-height: 420px;
@@ -506,8 +462,8 @@ function updateBreadcrumb(path: string) {
 
 .alert-dropdown-item {
   padding: 10px 12px;
-  border-left: 4px solid #1677ff;
-  border-bottom: 1px solid #f0f0f0;
+  border-left: 4px solid #409eff;
+  border-bottom: 1px solid var(--app-border-soft);
 }
 
 .alert-dropdown-item:last-child {
@@ -515,15 +471,15 @@ function updateBreadcrumb(path: string) {
 }
 
 .alert-red {
-  border-left-color: #ff4d4f;
+  border-left-color: #f56c6c;
 }
 
 .alert-orange {
-  border-left-color: #fa8c16;
+  border-left-color: #e6a23c;
 }
 
 .alert-blue {
-  border-left-color: #1677ff;
+  border-left-color: #409eff;
 }
 
 .alert-dropdown-title {
@@ -543,14 +499,14 @@ function updateBreadcrumb(path: string) {
 
 .alert-dropdown-meta {
   margin-bottom: 6px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--app-text-muted);
   font-size: 12px;
 }
 
 .alert-dropdown-output {
   display: -webkit-box;
   overflow: hidden;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--app-text-secondary);
   font-size: 12px;
   line-height: 1.5;
   -webkit-box-orient: vertical;
@@ -558,8 +514,8 @@ function updateBreadcrumb(path: string) {
 }
 
 .sider {
-  border-right: 1px solid rgba(98, 196, 230, 0.12);
-  background: linear-gradient(180deg, #0c2238 0%, #071422 100%);
+  border-right: 1px solid var(--app-border);
+  background: var(--app-surface);
 }
 
 .sider :deep(.ant-layout-sider-children) {
@@ -574,22 +530,22 @@ function updateBreadcrumb(path: string) {
   overflow: auto;
   border-right: 0;
   background: transparent;
-  color: rgba(214, 236, 248, 0.82);
+  color: var(--app-text-secondary);
 }
 
 .sider :deep(.ant-menu) {
-  background: transparent;
-  color: rgba(214, 236, 248, 0.82);
+  background: var(--app-surface);
+  color: var(--app-text-secondary);
 }
 
 .sider :deep(.ant-menu-item),
 .sider :deep(.ant-menu-submenu-title) {
   height: auto;
-  min-height: 54px;
-  padding-top: 14px;
-  padding-bottom: 14px;
-  color: rgba(214, 236, 248, 0.78);
-  font-size: 19px;
+  min-height: 48px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  color: var(--app-text-secondary);
+  font-size: 14px;
   line-height: 1.45;
   white-space: normal;
 }
@@ -601,23 +557,23 @@ function updateBreadcrumb(path: string) {
 
 .sider :deep(.ant-menu-item .anticon),
 .sider :deep(.ant-menu-submenu-title .anticon) {
-  font-size: 21px;
+  font-size: 16px;
 }
 
 .sider :deep(.ant-menu-item:hover),
 .sider :deep(.ant-menu-submenu-title:hover) {
-  background: rgba(90, 190, 235, 0.16) !important;
-  color: #fff;
+  background: var(--app-accent-soft) !important;
+  color: var(--app-accent);
 }
 
 .sider :deep(.ant-menu-item-selected) {
-  background: rgba(72, 186, 230, 0.16) !important;
-  box-shadow: inset 3px 0 0 #67d6ff;
-  color: #fff;
+  background: var(--app-accent-soft) !important;
+  box-shadow: inset 3px 0 0 var(--app-accent);
+  color: var(--app-accent);
 }
 
 .sider :deep(.ant-menu-sub.ant-menu-inline) {
-  background: rgba(6, 24, 46, 0.45) !important;
+  background: var(--app-surface-muted) !important;
 }
 
 .logo {
@@ -625,6 +581,6 @@ function updateBreadcrumb(path: string) {
   margin: 16px 18px 8px;
   border: 0;
   border-radius: 2px;
-  background: linear-gradient(90deg, transparent, rgba(110, 214, 255, 0.72), transparent);
+  background: var(--app-border);
 }
 </style>

@@ -153,9 +153,9 @@ onBeforeUnmount(() => {
 .console-frame {
   width: 100%;
   height: 100%;
-  border: 1px solid #f0f0f0;
+  border: 1px solid var(--app-border-soft);
   border-radius: 6px;
-  background: #fff;
+  background: var(--app-surface);
 }
 
 .state-panel {
@@ -169,7 +169,7 @@ onBeforeUnmount(() => {
 
 .lock-icon {
   margin-bottom: 8px;
-  color: #bfbfbf;
+  color: var(--app-text-muted);
   font-size: 48px;
 }
 
@@ -181,7 +181,7 @@ onBeforeUnmount(() => {
 
 .state-desc {
   margin: 0;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--app-text-muted);
 }
 
 .state-actions {

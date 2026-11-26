@@ -358,7 +358,7 @@ watch(activeTab, (newTab) => {
 
 .info-label {
   font-size: 17px;
-  color: #666;
+  color: var(--app-text-secondary);
 }
 
 .info-value {
@@ -419,7 +419,7 @@ watch(activeTab, (newTab) => {
 
 .resource-label {
   font-size: 17px;
-  color: #666;
+  color: var(--app-text-secondary);
 }
 
 .resource-value {
@@ -430,7 +430,7 @@ watch(activeTab, (newTab) => {
 .tab-placeholder {
   padding: 48px 0;
   text-align: center;
-  color: #999;
+  color: var(--app-text-muted);
   font-size: 19px;
 }
 
@@ -441,6 +441,6 @@ watch(activeTab, (newTab) => {
 .yaml-textarea {
   font-family: 'Courier New', Courier, monospace;
   line-height: 1.5;
-  color: #333;
+  color: var(--app-text);
 }
 </style>
