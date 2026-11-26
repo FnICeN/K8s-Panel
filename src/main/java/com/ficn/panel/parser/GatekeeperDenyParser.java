@@ -81,12 +81,27 @@ public class GatekeeperDenyParser {
     }
 
     private String extractScope(String message) {
-        int scopeIndex = message.indexOf(SCOPE_MARKER);
-        if (scopeIndex < 0) {
+        if (!StringUtils.hasText(message)) {
             return null;
         }
-        String scope = message.substring(scopeIndex + SCOPE_MARKER.length()).trim();
-        return StringUtils.hasText(scope) ? scope : null;
+
+        String matchedScope = null;
+        for (String line : message.split("\\R")) {
+            int scopeIndex = line.indexOf(SCOPE_MARKER);
+            if (scopeIndex < 0) {
+                continue;
+            }
+
+            String scope = line.substring(scopeIndex + SCOPE_MARKER.length()).trim();
+            if (AuthScopeEnum.getEnumByScope(scope) == null) {
+                return null;
+            }
+            if (matchedScope != null && !matchedScope.equals(scope)) {
+                return null;
+            }
+            matchedScope = scope;
+        }
+        return matchedScope;
     }
 
     private String knownScopes() {

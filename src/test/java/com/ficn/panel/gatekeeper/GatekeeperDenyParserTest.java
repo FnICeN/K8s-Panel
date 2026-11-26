@@ -39,6 +39,23 @@ class GatekeeperDenyParserTest {
     }
 
     @Test
+    void parsesMatchingScopesFromMultiplePolicyLines() {
+        Optional<GatekeeperReauthChallenge> result = parser.parse(forbidden(gatekeeperBody(
+                "SCOPE:openid Reauth TOTP DeviceAuthen\n[another policy] SCOPE:openid Reauth TOTP DeviceAuthen")));
+
+        assertThat(result).isPresent();
+        assertThat(result.get().scope()).isEqualTo("openid Reauth TOTP DeviceAuthen");
+        assertThat(result.get().authScopeEnum()).isEqualTo(AuthScopeEnum.RE_AUTH_DEVICE);
+    }
+
+    @Test
+    void ignoresConflictingScopesFromMultiplePolicyLines() {
+        assertThat(parser.parse(forbidden(gatekeeperBody(
+                "SCOPE:openid Reauth TOTP\n[another policy] SCOPE:openid Reauth TOTP DeviceAuthen"))))
+                .isEmpty();
+    }
+
+    @Test
     void ignoresOrdinaryRbacForbidden() {
         String body = """
                 {
@@ -80,7 +97,7 @@ class GatekeeperDenyParserTest {
                   "reason": "Forbidden",
                   "code": 403
                 }
-                """.formatted(suffix);
+                """.formatted(suffix.replace("\n", "\\n"));
     }
 
     private static HttpClientErrorException.Forbidden forbidden(String body) {

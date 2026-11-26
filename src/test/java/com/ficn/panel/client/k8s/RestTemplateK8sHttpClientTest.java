@@ -62,6 +62,20 @@ class RestTemplateK8sHttpClientTest {
     }
 
     @Test
+    void postThrowsReauthExceptionForMatchingScopesFromMultiplePolicies() {
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(PodSpecResponse.class)))
+                .thenThrow(forbidden(gatekeeperBody(
+                        "SCOPE:openid Reauth TOTP DeviceAuthen\n[another policy] SCOPE:openid Reauth TOTP DeviceAuthen")));
+
+        assertThatThrownBy(() -> k8sHttpClient.post("token", "/api/v1/namespaces/demo/pods",
+                Map.of("kind", "Pod"), PodSpecResponse.class))
+                .isInstanceOfSatisfying(GatekeeperReauthRequiredException.class, e -> {
+                    assertThat(e.getScope()).isEqualTo("openid Reauth TOTP DeviceAuthen");
+                    assertThat(e.getAuthScopeEnum()).isEqualTo(AuthScopeEnum.RE_AUTH_DEVICE);
+                });
+    }
+
+    @Test
     void postReturnsPolicyTriggerMessageForAppPolicyForbidden() {
         when(restTemplate.exchange(any(URI.class), eq(HttpMethod.POST), any(HttpEntity.class), eq(PodSpecResponse.class)))
                 .thenThrow(forbidden("""
@@ -106,17 +120,21 @@ class RestTemplateK8sHttpClientTest {
     }
 
     private static String gatekeeperBody() {
+        return gatekeeperBody("SCOPE:openid Reauth TOTP DeviceAuthen");
+    }
+
+    private static String gatekeeperBody(String suffix) {
         return """
                 {
                   "kind": "Status",
                   "apiVersion": "v1",
                   "metadata": {},
                   "status": "Failure",
-                  "message": "admission webhook \\"validation.gatekeeper.sh\\" denied the request: [policy] SCOPE:openid Reauth TOTP DeviceAuthen",
+                  "message": "admission webhook \\"validation.gatekeeper.sh\\" denied the request: [policy] %s",
                   "reason": "Forbidden",
                   "code": 403
                 }
-                """;
+                """.formatted(suffix.replace("\n", "\\n"));
     }
 
     private static HttpClientErrorException.Forbidden forbidden(String body) {
