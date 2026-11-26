@@ -17,6 +17,10 @@ final class K8sApiPaths {
     static final String NAMESPACES = "/api/v1/namespaces";
     static final String DEPLOYMENTS = "/apis/apps/v1/deployments";
 
+    static String withDryRun(String path, boolean dryRun) {
+        return dryRun ? path + "?dryRun=All" : path;
+    }
+
     private K8sApiPaths() {
     }
 

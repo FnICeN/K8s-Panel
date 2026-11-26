@@ -31,6 +31,10 @@ public class PodApi {
         return k8sHttpClient.post(token, K8sApiPaths.namespacePods(namespace), body, PodSpecResponse.class);
     }
 
+    public PodSpecResponse create(String token, String namespace, Object body, boolean dryRun) {
+        return k8sHttpClient.post(token, K8sApiPaths.withDryRun(K8sApiPaths.namespacePods(namespace), dryRun), body, PodSpecResponse.class);
+    }
+
     public String getYaml(String token, String namespace, String podName) {
         return k8sHttpClient.getYaml(token, K8sApiPaths.pod(namespace, podName));
     }

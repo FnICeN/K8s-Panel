@@ -8,4 +8,6 @@ public interface NamespaceService {
     K8sListResponse<NamespaceVO> getNamespaces(String token);
 
     NamespaceSpecResponse createNamespace(String token, String yaml);
+
+    NamespaceSpecResponse createNamespace(String token, String yaml, boolean dryRun);
 }

@@ -75,6 +75,25 @@ class PodServiceImplTest {
     }
 
     @Test
+    void createPodPassesDryRunToKubernetesApi() {
+        String yaml = """
+                apiVersion: v1
+                kind: Pod
+                metadata:
+                  name: nginx
+                  namespace: demo
+                spec:
+                  containers:
+                    - name: nginx
+                      image: nginx:latest
+                """;
+
+        podService.createPod("token", yaml, true);
+
+        verify(podApi).create(eq("token"), eq("demo"), org.mockito.ArgumentMatchers.any(), eq(true));
+    }
+
+    @Test
     void createPodRejectsMissingNamespace() {
         String yaml = """
                 apiVersion: v1

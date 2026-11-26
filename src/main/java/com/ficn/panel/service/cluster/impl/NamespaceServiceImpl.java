@@ -21,8 +21,15 @@ public class NamespaceServiceImpl implements NamespaceService {
 
     @Override
     public NamespaceSpecResponse createNamespace(String token, String yaml) {
+        return createNamespace(token, yaml, false);
+    }
+
+    @Override
+    public NamespaceSpecResponse createNamespace(String token, String yaml, boolean dryRun) {
         K8sResourceYamlParser.ParsedResource resource =
                 K8sResourceYamlParser.parseClusterScoped(yaml, "Namespace", "v1");
-        return namespaceApi.create(token, resource.body());
+        return dryRun
+                ? namespaceApi.create(token, resource.body(), true)
+                : namespaceApi.create(token, resource.body());
     }
 }

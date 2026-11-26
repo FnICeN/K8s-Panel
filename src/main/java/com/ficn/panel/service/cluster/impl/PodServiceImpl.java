@@ -26,9 +26,16 @@ public class PodServiceImpl implements PodService {
 
     @Override
     public PodSpecResponse createPod(String token, String yaml) {
+        return createPod(token, yaml, false);
+    }
+
+    @Override
+    public PodSpecResponse createPod(String token, String yaml, boolean dryRun) {
         K8sResourceYamlParser.ParsedResource resource =
                 K8sResourceYamlParser.parseNamespaced(yaml, "Pod", "v1");
-        return podApi.create(token, resource.namespace(), resource.body());
+        return dryRun
+                ? podApi.create(token, resource.namespace(), resource.body(), true)
+                : podApi.create(token, resource.namespace(), resource.body());
     }
 
     @Override

@@ -37,6 +37,10 @@ public class DeploymentApi {
         return k8sHttpClient.post(token, K8sApiPaths.namespaceDeployments(namespace), body, DeploymentSpecResponse.class);
     }
 
+    public DeploymentSpecResponse create(String token, String namespace, Object body, boolean dryRun) {
+        return k8sHttpClient.post(token, K8sApiPaths.withDryRun(K8sApiPaths.namespaceDeployments(namespace), dryRun), body, DeploymentSpecResponse.class);
+    }
+
     public String getYaml(String token, String namespace, String deploymentName) {
         return k8sHttpClient.getYaml(token, K8sApiPaths.deployment(namespace, deploymentName));
     }

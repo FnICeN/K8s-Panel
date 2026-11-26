@@ -92,11 +92,11 @@ public class ClusterController {
 
     @PostMapping(value="/namespaces", produces = "application/json")
     @Operation(summary = "创建Namespace")
-    public BaseResponse<NamespaceSpecResponse> createNamespace(@RequestBody(required = false) CreateNamespaceRequest createNamespaceRequest, HttpServletRequest request) {
+    public BaseResponse<NamespaceSpecResponse> createNamespace(@RequestBody(required = false) CreateNamespaceRequest createNamespaceRequest, @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun, HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         String yaml = createNamespaceRequest == null ? null : createNamespaceRequest.getYaml();
-        NamespaceSpecResponse namespace = NamespaceService.createNamespace(user.getIdToken(), yaml);
+        NamespaceSpecResponse namespace = NamespaceService.createNamespace(user.getIdToken(), yaml, dryRun);
         return ResultUtils.success(namespace);
     }
 
@@ -112,11 +112,11 @@ public class ClusterController {
 
     @PostMapping(value="/pods", produces = "application/json")
     @Operation(summary = "创建Pod")
-    public BaseResponse<PodSpecResponse> createPod(@RequestBody(required = false) CreatePodRequest createPodRequest, HttpServletRequest request) {
+    public BaseResponse<PodSpecResponse> createPod(@RequestBody(required = false) CreatePodRequest createPodRequest, @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun, HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         String yaml = createPodRequest == null ? null : createPodRequest.getYaml();
-        PodSpecResponse pod = podService.createPod(user.getIdToken(), yaml);
+        PodSpecResponse pod = podService.createPod(user.getIdToken(), yaml, dryRun);
         return ResultUtils.success(pod);
     }
 
@@ -152,11 +152,11 @@ public class ClusterController {
 
     @PostMapping(value="/deployments", produces = "application/json")
     @Operation(summary = "创建Deployment")
-    public BaseResponse<DeploymentSpecResponse> createDeployment(@RequestBody(required = false) CreateDeploymentRequest createDeploymentRequest, HttpServletRequest request) {
+    public BaseResponse<DeploymentSpecResponse> createDeployment(@RequestBody(required = false) CreateDeploymentRequest createDeploymentRequest, @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun, HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         String yaml = createDeploymentRequest == null ? null : createDeploymentRequest.getYaml();
-        DeploymentSpecResponse deployment = deploymentService.createDeployment(user.getIdToken(), yaml);
+        DeploymentSpecResponse deployment = deploymentService.createDeployment(user.getIdToken(), yaml, dryRun);
         return ResultUtils.success(deployment);
     }
 
@@ -246,11 +246,11 @@ public class ClusterController {
 
     @PostMapping(value="/services", produces = "application/json")
     @Operation(summary = "创建Service")
-    public BaseResponse<ServiceSpecResponse> createService(@RequestBody(required = false) CreateServiceRequest createServiceRequest, HttpServletRequest request) {
+    public BaseResponse<ServiceSpecResponse> createService(@RequestBody(required = false) CreateServiceRequest createServiceRequest, @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun, HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         String yaml = createServiceRequest == null ? null : createServiceRequest.getYaml();
-        ServiceSpecResponse service = serviceService.createService(user.getIdToken(), yaml);
+        ServiceSpecResponse service = serviceService.createService(user.getIdToken(), yaml, dryRun);
         return ResultUtils.success(service);
     }
 

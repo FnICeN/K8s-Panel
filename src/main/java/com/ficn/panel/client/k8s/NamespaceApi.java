@@ -21,4 +21,8 @@ public class NamespaceApi {
     public NamespaceSpecResponse create(String token, Object body) {
         return k8sHttpClient.post(token, K8sApiPaths.NAMESPACES, body, NamespaceSpecResponse.class);
     }
+
+    public NamespaceSpecResponse create(String token, Object body, boolean dryRun) {
+        return k8sHttpClient.post(token, K8sApiPaths.withDryRun(K8sApiPaths.NAMESPACES, dryRun), body, NamespaceSpecResponse.class);
+    }
 }

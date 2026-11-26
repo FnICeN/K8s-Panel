@@ -15,6 +15,8 @@ public interface DeploymentService {
 
     DeploymentSpecResponse createDeployment(String token, String yaml);
 
+    DeploymentSpecResponse createDeployment(String token, String yaml, boolean dryRun);
+
     String getDeploymentAllSpec(String token, String namespace, String deploymentName);
 
     K8sListResponse<PodVO> getDeploymentPods(String token, String namespace, String deploymentName);

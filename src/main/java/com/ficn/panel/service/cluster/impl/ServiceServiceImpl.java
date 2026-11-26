@@ -26,9 +26,16 @@ public class ServiceServiceImpl implements ServiceService {
 
     @Override
     public ServiceSpecResponse createService(String token, String yaml) {
+        return createService(token, yaml, false);
+    }
+
+    @Override
+    public ServiceSpecResponse createService(String token, String yaml, boolean dryRun) {
         K8sResourceYamlParser.ParsedResource resource =
                 K8sResourceYamlParser.parseNamespaced(yaml, "Service", "v1");
-        return serviceApi.create(token, resource.namespace(), resource.body());
+        return dryRun
+                ? serviceApi.create(token, resource.namespace(), resource.body(), true)
+                : serviceApi.create(token, resource.namespace(), resource.body());
     }
 
     @Override

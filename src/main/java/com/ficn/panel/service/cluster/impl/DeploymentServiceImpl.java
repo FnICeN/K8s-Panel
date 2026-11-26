@@ -43,9 +43,16 @@ public class DeploymentServiceImpl implements DeploymentService {
 
     @Override
     public DeploymentSpecResponse createDeployment(String token, String yaml) {
+        return createDeployment(token, yaml, false);
+    }
+
+    @Override
+    public DeploymentSpecResponse createDeployment(String token, String yaml, boolean dryRun) {
         K8sResourceYamlParser.ParsedResource resource =
                 K8sResourceYamlParser.parseNamespaced(yaml, "Deployment", "apps/v1");
-        return deploymentApi.create(token, resource.namespace(), resource.body());
+        return dryRun
+                ? deploymentApi.create(token, resource.namespace(), resource.body(), true)
+                : deploymentApi.create(token, resource.namespace(), resource.body());
     }
 
     @Override
