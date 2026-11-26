@@ -2,6 +2,15 @@
   <a-layout class="basic-layout">
     <a-layout-header class="header">
       <div class="header-left">
+        <a-button
+          class="sider-toggle"
+          type="text"
+          :aria-label="collapsed ? '展开导航栏' : '收起导航栏'"
+          :aria-expanded="!collapsed"
+          aria-controls="main-menu"
+          :icon="h(collapsed ? MenuUnfoldOutlined : MenuFoldOutlined)"
+          @click="collapsed = !collapsed"
+        />
         <h1 class="platform-name">天基云网安全集控平台</h1>
         <a-breadcrumb class="breadcrumb" separator=">">
           <a-breadcrumb-item v-for="(item, index) in breadcrumbItems" :key="index">
@@ -85,8 +94,16 @@
         <a-button v-else class="login-button" type="primary" @click="loginDialogRef?.open()">登录</a-button>
       </div>
     </a-layout-header>
-    <a-layout>
-      <a-layout-sider class="sider" width="310">
+    <a-layout class="body-layout">
+      <a-layout-sider
+        v-model:collapsed="collapsed"
+        class="sider"
+        width="310"
+        :collapsed-width="80"
+        breakpoint="xl"
+        :trigger="null"
+        collapsible
+      >
         <div class="logo" />
         <a-menu
           id="main-menu"
@@ -99,7 +116,7 @@
           @click="handleClick"
         ></a-menu>
       </a-layout-sider>
-      <a-layout>
+      <a-layout class="content-layout">
         <a-layout-content
           class="main-content"
           :class="{ 'home-content': route.path === '/', 'cluster-content': isClusterPage }"
@@ -138,6 +155,8 @@ import {
   DatabaseOutlined,
   DashboardOutlined,
   FundOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from '@ant-design/icons-vue'
 import { message, Empty, type MenuProps, type ItemType } from 'ant-design-vue'
 import LoginDialog from '@/components/LoginDialog.vue'
@@ -157,6 +176,7 @@ const authStore = useAuthStore()
 const auditStore = useAuditStore()
 const { isLoggedIn } = storeToRefs(authStore)
 const { colorMode, toggleTheme } = useTheme()
+const collapsed = ref(false)
 const loginDialogRef = ref<InstanceType<typeof LoginDialog> | null>(null)
 const createResourceDialogRef = ref<InstanceType<typeof CreateResourceDialog> | null>(null)
 const uploadResourceDialogRef = ref<InstanceType<typeof UploadResourceDialog> | null>(null)
@@ -196,7 +216,6 @@ function getItem(
 
 const items: ItemType[] = reactive([
   getItem('首页', '/', () => h(HomeOutlined)),
-  getItem('审计告警', '/audit-alerts', () => h(BellOutlined)),
   getItem('天基云网管理', '/health', () => h(CheckCircleOutlined), [
     getItem('星载计算节点管理（Node）', '/nodes'),
     getItem('计算单元（Pod）', '/pods'),
@@ -206,7 +225,8 @@ const items: ItemType[] = reactive([
   ]),
   getItem('备份管理', '/backup', () => h(DatabaseOutlined)),
   getItem('云网监控仪表盘', '/dashboard', () => h(FundOutlined)),
-  getItem('监控告警管理', '/monitor', () => h(DashboardOutlined)),
+  getItem('审计告警', '/audit-alerts', () => h(BellOutlined)),
+  getItem('监控告警', '/monitor', () => h(DashboardOutlined)),
 ])
 
 const loggingOut = ref(false)
@@ -280,6 +300,7 @@ watch(
 )
 
 function updateOpenKeys(path: string) {
+  if (collapsed.value) return
   // 根据当前路径更新 openKeys
   if (
     path === '/health' ||
@@ -294,6 +315,14 @@ function updateOpenKeys(path: string) {
     openKeys.value = []
   }
 }
+
+watch(collapsed, (value) => {
+  if (value) {
+    openKeys.value = []
+  } else {
+    updateOpenKeys(route.path)
+  }
+})
 
 function updateBreadcrumb(path: string) {
   // 根据当前路径更新面包屑
@@ -339,7 +368,7 @@ function updateBreadcrumb(path: string) {
   } else if (path === '/dashboard') {
     items.push({ title: '云网监控仪表盘', path: '/dashboard' })
   } else if (path === '/monitor') {
-    items.push({ title: '监控告警管理', path: '/monitor' })
+    items.push({ title: '监控告警', path: '/monitor' })
   } else if (path === '/health') {
     items.push({ title: '天基云网管理', path: '/health' })
   }
@@ -354,7 +383,15 @@ function updateBreadcrumb(path: string) {
   background: var(--app-bg);
 }
 
+.body-layout,
+.content-layout,
 .main-content {
+  min-width: 0;
+}
+
+.main-content {
+  container-name: page-content;
+  container-type: inline-size;
   min-height: 280px;
   margin: 24px 16px;
   padding: 24px;
@@ -388,17 +425,26 @@ function updateBreadcrumb(path: string) {
   display: flex;
   align-items: center;
   gap: 24px;
+  min-width: 0;
+}
+
+.sider-toggle {
+  flex: none;
 }
 
 .platform-name {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .breadcrumb {
   margin: 0;
   font-size: 14px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .breadcrumb :deep(.ant-breadcrumb-link a) {
@@ -418,6 +464,7 @@ function updateBreadcrumb(path: string) {
   align-items: center;
   gap: 12px;
   line-height: 1;
+  flex: none;
 }
 
 .header :deep(.ant-btn) {
@@ -574,6 +621,54 @@ function updateBreadcrumb(path: string) {
 
 .sider :deep(.ant-menu-sub.ant-menu-inline) {
   background: var(--app-surface-muted) !important;
+}
+
+.sider.ant-layout-sider-collapsed :deep(.ant-menu-inline-collapsed > .ant-menu-item),
+.sider.ant-layout-sider-collapsed :deep(.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 16px);
+  height: 44px;
+  min-height: 44px;
+  margin: 4px 8px;
+  padding: 0 !important;
+  line-height: 44px;
+  white-space: nowrap;
+}
+
+.sider.ant-layout-sider-collapsed :deep(.ant-menu-inline-collapsed > .ant-menu-item .ant-menu-title-content),
+.sider.ant-layout-sider-collapsed :deep(.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-title-content) {
+  display: none;
+}
+
+.sider.ant-layout-sider-collapsed :deep(.ant-menu-inline-collapsed > .ant-menu-item .anticon),
+.sider.ant-layout-sider-collapsed :deep(.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .anticon) {
+  margin: 0;
+  line-height: 1;
+}
+
+@media (max-width: 1150px) {
+  .header {
+    gap: 12px;
+    padding: 0 16px;
+  }
+
+  .header-left {
+    gap: 12px;
+  }
+
+  .platform-name {
+    font-size: 16px;
+  }
+
+  .breadcrumb {
+    display: none;
+  }
+
+  .header-right {
+    gap: 8px;
+  }
 }
 
 .logo {

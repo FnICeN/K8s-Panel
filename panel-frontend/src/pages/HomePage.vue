@@ -558,7 +558,7 @@ onBeforeUnmount(() => {
   z-index: 3;
   top: calc(50% + 40px);
   left: 50%;
-  width: min(31vw, 500px);
+  width: min(31%, 500px);
   aspect-ratio: 1;
   border-radius: 50%;
   transform: translate(-50%, -50%);
@@ -573,7 +573,7 @@ onBeforeUnmount(() => {
   z-index: 2;
   top: calc(50% + 40px);
   left: 50%;
-  width: min(52vw, 820px);
+  width: min(52%, 820px);
   aspect-ratio: 1;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(86, 198, 255, 0.08) 36%, rgba(46, 150, 235, 0.28) 56%, transparent 72%);
@@ -1131,6 +1131,122 @@ onBeforeUnmount(() => {
 
   .orbit-legend {
     display: none;
+  }
+}
+
+@container page-content (max-width: 1000px) {
+  .console-header {
+    padding: 18px 20px;
+  }
+
+  .console-header h1 {
+    font-size: 24px;
+  }
+
+  .subtitle {
+    margin-top: 3px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+  }
+
+  .system-state,
+  .refresh-button {
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .refresh-button span {
+    font-size: 18px;
+  }
+
+  .satellite-decorative {
+    display: none;
+  }
+
+  .satellite-high {
+    top: 19% !important;
+  }
+
+  .satellite {
+    width: 142px;
+  }
+
+  .satellite-label {
+    min-height: 22px;
+    max-width: 142px;
+    padding: 1px 5px;
+    font-size: 13px;
+    line-height: 18px;
+  }
+
+  .satellite-status {
+    font-size: 11px;
+  }
+
+  .earth-caption span {
+    font-size: 11px;
+  }
+
+  .earth-caption strong {
+    font-size: 14px;
+  }
+
+  .resource-panel {
+    right: 12px;
+    bottom: 12px;
+    width: 310px;
+    padding: 12px;
+  }
+
+  .panel-heading {
+    margin-bottom: 10px;
+  }
+
+  .panel-heading h2 {
+    font-size: 17px;
+  }
+
+  .panel-heading p,
+  .panel-status,
+  .metric-title,
+  .metric-title strong,
+  .panel-footer button {
+    font-size: 12px;
+  }
+
+  .metric-foot,
+  .panel-footer span {
+    font-size: 11px;
+  }
+
+  .metric-block + .metric-block {
+    margin-top: 8px;
+  }
+
+  .panel-footer {
+    margin-top: 9px;
+    padding-top: 8px;
+  }
+}
+
+@container page-content (max-width: 800px) {
+  .satellite {
+    width: 108px;
+  }
+
+  .satellite-label {
+    max-width: 108px;
+    font-size: 12px;
+  }
+
+  .satellite-status,
+  .earth-caption,
+  .orbit-legend {
+    display: none;
+  }
+
+  .resource-panel {
+    width: 270px;
   }
 }
 

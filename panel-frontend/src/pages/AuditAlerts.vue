@@ -303,8 +303,9 @@ onMounted(() => {
       row-key="uuid"
       :pagination="{ pageSize: 10 }"
       :row-class-name="getAlertRowClassName"
+          :scroll="{ x: 1180 }"
     >
-      <a-table-column title="规则" data-index="rule" key="rule">
+      <a-table-column title="规则" data-index="rule" key="rule" :width="220" fixed="left">
         <template #default="{ record }">
           <div class="rule-cell">
             <strong>{{ record.ruleCn || record.rule }}</strong>
@@ -373,7 +374,7 @@ onMounted(() => {
           <a-descriptions
             bordered
             size="small"
-            :column="{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }"
+            :column="1"
           >
             <a-descriptions-item
               v-for="row in detailRows(record)"
@@ -403,8 +404,9 @@ onMounted(() => {
           :loading="historyLoading"
           row-key="uuid"
           :pagination="false"
+          :scroll="{ x: 1180 }"
         >
-          <a-table-column title="报告编号" key="reportId" :width="210">
+            <a-table-column title="报告编号" key="reportId" :width="210" fixed="left">
             <template #default="{ record }">
               <span class="report-id">AUD-{{ record.uuid }}</span>
             </template>
@@ -490,6 +492,7 @@ onMounted(() => {
 
 <style scoped>
 .audit-alert-page {
+  min-width: 0;
   padding: 0 24px;
 }
 
@@ -589,6 +592,7 @@ onMounted(() => {
 }
 
 .audit-tabs {
+  min-width: 0;
   padding: 0 18px 18px;
   background: var(--app-surface);
   border: 1px solid var(--app-border-soft);
@@ -634,14 +638,14 @@ onMounted(() => {
 }
 
 .alert-table {
-  max-width: 100%;
-  overflow: hidden;
+  min-width: 0;
+  width: 100%;
   border: 1px solid var(--app-border-soft);
   border-radius: 4px;
 }
 
-:deep(.alert-table .ant-table table) {
-  table-layout: fixed !important;
+:deep(.alert-table .ant-table-content) {
+  overflow-x: auto;
 }
 
 :deep(.alert-row-red td:first-child) {
@@ -740,6 +744,28 @@ onMounted(() => {
 
   .severity-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 900px) {
+  .audit-alert-page {
+    padding: 0;
+  }
+
+  .alert-hero {
+    padding: 16px;
+  }
+
+  .audit-tabs {
+    padding: 0 10px 12px;
+  }
+
+  .severity-grid {
+    gap: 8px;
+  }
+
+  .severity-card {
+    padding: 12px;
   }
 }
 </style>
