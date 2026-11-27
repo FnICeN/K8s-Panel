@@ -175,6 +175,19 @@ export async function getNamespaces(options?: { [key: string]: any }) {
   })
 }
 
+/** 删除某个命名空间 DELETE /cluster/namespaces/${param0} */
+export async function deleteNamespace(
+  params: API.deleteNamespaceParams,
+  options?: { [key: string]: any }
+) {
+  const { name: param0, ...queryParams } = params
+  return request<API.BaseResponseBoolean>(`/cluster/namespaces/${encodeURIComponent(param0)}`, {
+    method: 'DELETE',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
 /** 创建Namespace POST /cluster/namespaces */
 export async function createNamespace(
   body: API.CreateNamespaceRequest,

@@ -32,6 +32,10 @@ final class K8sApiPaths {
         return node(nodeName) + "/proxy/stats/summary";
     }
 
+    static String namespace(String namespace) {
+        return NAMESPACES + "/" + encodeRequired(namespace, "namespace");
+    }
+
     static String namespacePods(String namespace) {
         return "/api/v1/namespaces/" + encodeRequired(namespace, "namespace") + "/pods";
     }

@@ -10,4 +10,6 @@ public interface NamespaceService {
     NamespaceSpecResponse createNamespace(String token, String yaml);
 
     NamespaceSpecResponse createNamespace(String token, String yaml, boolean dryRun);
+
+    void deleteNamespace(String token, String namespace);
 }

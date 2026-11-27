@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { getNamespaces } from '@/api/clusterController.ts'
+import { deleteNamespace, getNamespaces } from '@/api/clusterController.ts'
 import { ReloadOutlined } from '@ant-design/icons-vue'
+import { Modal, message } from 'ant-design-vue'
 import { computed, h, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+const PROTECTED_NAMESPACES = new Set([
+  'default',
+  'kube-system',
+  'kube-public',
+  'kube-node-lease',
+])
 
 const router = useRouter()
 type NamespaceItem = API.NamespaceVO & {
@@ -50,6 +58,38 @@ const handleNamespaceClick = (namespace: API.NamespaceVO) => {
       query: { namespace: namespace.metadata.name },
     })
   }
+}
+
+const canDeleteNamespace = (namespace: API.NamespaceVO) => {
+  const name = namespace.metadata?.name
+  return !!name && !PROTECTED_NAMESPACES.has(name)
+}
+
+const handleDeleteNamespace = (namespace: API.NamespaceVO) => {
+  const name = namespace.metadata?.name
+  if (!name || !canDeleteNamespace(namespace)) {
+    return
+  }
+  Modal.confirm({
+    title: '删除命名空间',
+    content: `确认删除命名空间 ${name} 吗？该命名空间及其内部的 Pod、Deployment、Service 等资源会一并删除。`,
+    okText: '删除',
+    okType: 'danger',
+    cancelText: '取消',
+    async onOk() {
+      try {
+        const response = await deleteNamespace({ name })
+        if (response.data.code !== 0) {
+          return
+        }
+        message.success('删除成功')
+        await loadNamespaces()
+      } catch (error) {
+        console.error('Failed to delete namespace:', error)
+        message.error('删除失败')
+      }
+    },
+  })
 }
 
 type NamespaceStatus = API.StatusVO & { phase?: string }
@@ -110,6 +150,23 @@ const getNamespaceStatusColor = (namespace: API.NamespaceVO) => {
           {{ record.metadata?.creationTimestamp || '-' }}
         </template>
       </a-table-column>
+      <a-table-column title="操作" key="actions" :width="140">
+        <template #default="{ record }">
+          <span class="row-actions">
+            <a @click="handleNamespaceClick(record)">详情</a>
+            <a
+              v-if="canDeleteNamespace(record)"
+              class="danger-action"
+              @click="handleDeleteNamespace(record)"
+            >
+              删除
+            </a>
+            <a-tooltip v-else title="系统命名空间不能删除">
+              <span class="danger-action disabled">删除</span>
+            </a-tooltip>
+          </span>
+        </template>
+      </a-table-column>
     </a-table>
   </div>
 </template>
@@ -141,5 +198,20 @@ const getNamespaceStatusColor = (namespace: API.NamespaceVO) => {
 
 .search-input {
   width: 260px;
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.danger-action {
+  color: #ff4d4f;
+}
+
+.danger-action.disabled {
+  color: var(--app-text-muted);
+  cursor: not-allowed;
 }
 </style>

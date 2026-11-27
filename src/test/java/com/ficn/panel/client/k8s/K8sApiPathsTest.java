@@ -7,6 +7,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class K8sApiPathsTest {
 
     @Test
+    void namespaceDeleteTargetsClusterScopedResource() {
+        assertThat(K8sApiPaths.namespace("demo")).isEqualTo("/api/v1/namespaces/demo");
+    }
+
+    @Test
     void dryRunIsOnlyAddedWhenRequested() {
         String path = K8sApiPaths.namespacePods("demo");
 

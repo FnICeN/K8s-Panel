@@ -25,4 +25,8 @@ public class NamespaceApi {
     public NamespaceSpecResponse create(String token, Object body, boolean dryRun) {
         return k8sHttpClient.post(token, K8sApiPaths.withDryRun(K8sApiPaths.NAMESPACES, dryRun), body, NamespaceSpecResponse.class);
     }
+
+    public void delete(String token, String namespace) {
+        k8sHttpClient.delete(token, K8sApiPaths.namespace(namespace));
+    }
 }

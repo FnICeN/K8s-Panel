@@ -117,6 +117,15 @@ public class ClusterController {
         return ResultUtils.success(namespace);
     }
 
+    @DeleteMapping(value = "/namespaces/{name}", produces = "application/json")
+    @Operation(summary = "删除某个命名空间")
+    public BaseResponse<Boolean> deleteNamespace(@PathVariable("name") String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        NamespaceService.deleteNamespace(user.getIdToken(), name);
+        return ResultUtils.success(true);
+    }
+
     @GetMapping(value="/pods/{namespace}", produces = "application/json")
     @Operation(summary = "获取某个命名空间下所有pod")
     public BaseResponse<K8sListResponse<PodVO>> getPodsAll(@PathVariable("namespace") String namespace, HttpServletRequest request) {

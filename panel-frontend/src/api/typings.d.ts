@@ -223,6 +223,10 @@ declare namespace API {
     deployment_name: string
   }
 
+  type deleteNamespaceParams = {
+    name: string
+  }
+
   type deleteServiceParams = {
     namespace: string
     service_name: string
