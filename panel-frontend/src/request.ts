@@ -55,7 +55,19 @@ myAxios.interceptors.response.use(
         }
       }
     }
-    message.warning(data.msg)
+    // 每个策略编号对应一条独立提示；其他错误（包括二次认证）保持原逻辑。
+    const policyMessages = typeof data.msg === 'string' ? data.msg.split(/\r?\n/) : []
+    if (
+      data.code !== 40100 &&
+      policyMessages.length > 0 &&
+      policyMessages.every((item: string) => /^策略\s*\d+\s*-\s*\d+\s*触发(?:[：:].*)?$/.test(item))
+    ) {
+      for (const item of policyMessages) {
+        message.warning(item)
+      }
+    } else {
+      message.warning(data.msg)
+    }
     return response
   },
   function (error) {
