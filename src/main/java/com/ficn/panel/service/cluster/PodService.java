@@ -14,4 +14,6 @@ public interface PodService {
     PodSpecResponse createPod(String token, String yaml, boolean dryRun);
 
     String getPodAllSpec(String token, String namespace, String podName);
+
+    String getPodLog(String token, String namespace, String podName, String container, Integer tailLines);
 }

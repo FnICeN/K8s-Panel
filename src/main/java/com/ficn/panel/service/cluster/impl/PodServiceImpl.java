@@ -42,4 +42,9 @@ public class PodServiceImpl implements PodService {
     public String getPodAllSpec(String token, String namespace, String podName) {
         return podApi.getYaml(token, namespace, podName);
     }
+
+    @Override
+    public String getPodLog(String token, String namespace, String podName, String container, Integer tailLines) {
+        return podApi.getLog(token, namespace, podName, container, tailLines);
+    }
 }

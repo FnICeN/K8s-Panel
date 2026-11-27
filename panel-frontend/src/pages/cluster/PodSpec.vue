@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, h, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { getPod, getPodAll } from '@/api/clusterController.ts'
+import { getPod, getPodAll, getPodLog } from '@/api/clusterController.ts'
 import { getNodeDisplayName } from '@/utils/nodeDisplayName.ts'
 import { RedoOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
 
 const route = useRoute()
 const namespace = ref(route.params.namespace as string)
@@ -13,6 +14,9 @@ const loading = ref(true)
 const podData = ref<API.PodSpecResponse>({})
 const yamlContent = ref('')
 const yamlLoading = ref(false)
+const logsLoading = ref(false)
+const logs = ref('')
+const selectedContainer = ref<string>()
 
 const loadPodData = async () => {
   try {
@@ -20,6 +24,9 @@ const loadPodData = async () => {
     const response = await getPod({ namespace: namespace.value, pod_name: podName.value })
     if (response.data.data) {
       podData.value = response.data.data
+      if (!selectedContainer.value) {
+        selectedContainer.value = podData.value.spec?.containers?.[0]?.name
+      }
     }
   } catch (error) {
     console.error('Failed to load pod data:', error)
@@ -48,7 +55,34 @@ watch(activeTab, (newTab) => {
   if (newTab === 'yaml') {
     loadYamlData()
   }
+  if (newTab === 'logs') {
+    loadLogs()
+  }
 })
+
+watch(selectedContainer, () => {
+  if (activeTab.value === 'logs') loadLogs()
+})
+
+const loadLogs = async () => {
+  try {
+    logsLoading.value = true
+    const response = await getPodLog({
+      namespace: namespace.value,
+      pod_name: podName.value,
+      container: selectedContainer.value,
+      tailLines: 500,
+    })
+    if (response.data.code === 0) {
+      logs.value = response.data.data || ''
+    }
+  } catch (error) {
+    console.error('Failed to load Pod logs:', error)
+    message.error('获取 Pod 日志失败')
+  } finally {
+    logsLoading.value = false
+  }
+}
 
 onMounted(() => {
   loadPodData()
@@ -57,6 +91,7 @@ onMounted(() => {
 const handleRefresh = () => {
   loadPodData()
   loadYamlData()
+  if (activeTab.value === 'logs') loadLogs()
 }
 
 const getPodStatusColor = (pod: API.PodSpecResponse) => {
@@ -212,6 +247,24 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
           </div>
         </a-tab-pane>
 
+        <a-tab-pane key="logs" tab="日志">
+          <div class="logs-toolbar">
+            <a-select v-model:value="selectedContainer" class="logs-container" placeholder="选择容器">
+              <a-select-option
+                v-for="container in podData.spec?.containers"
+                :key="container.name"
+                :value="container.name"
+              >
+                {{ container.name }}
+              </a-select-option>
+            </a-select>
+            <a-button :loading="logsLoading" :icon="h(RedoOutlined)" @click="loadLogs">刷新</a-button>
+          </div>
+          <a-spin :spinning="logsLoading">
+            <pre class="logs-output">{{ logs || '暂无日志' }}</pre>
+          </a-spin>
+        </a-tab-pane>
+
         <a-tab-pane key="containers" tab="容器">
           <div class="containers-content">
             <a-card
@@ -293,6 +346,27 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 </template>
 
 <style scoped>
+.logs-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.logs-container {
+  width: 220px;
+}
+
+.logs-output {
+  min-height: 180px;
+  max-height: 600px;
+  overflow: auto;
+  padding: 16px;
+  background: var(--app-surface-muted);
+  color: var(--app-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .pod-spec {
   padding: 0 24px;
 }

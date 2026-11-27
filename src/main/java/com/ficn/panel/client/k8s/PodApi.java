@@ -38,4 +38,8 @@ public class PodApi {
     public String getYaml(String token, String namespace, String podName) {
         return k8sHttpClient.getYaml(token, K8sApiPaths.pod(namespace, podName));
     }
+
+    public String getLog(String token, String namespace, String podName, String container, Integer tailLines) {
+        return k8sHttpClient.getText(token, K8sApiPaths.podLog(namespace, podName, container, tailLines));
+    }
 }

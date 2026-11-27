@@ -255,6 +255,22 @@ export async function getPodAll(
   })
 }
 
+/** 获取指定 Pod 的容器日志 GET /cluster/pods/{namespace}/{pod_name}/logs */
+export async function getPodLog(
+  params: { namespace: string; pod_name: string; container?: string; tailLines?: number },
+  options?: { [key: string]: any }
+) {
+  const { namespace, pod_name, ...queryParams } = params
+  return request<API.BaseResponseString>(
+    `/cluster/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(pod_name)}/logs`,
+    {
+      method: 'GET',
+      params: queryParams,
+      ...(options || {}),
+    }
+  )
+}
+
 /** 创建Service POST /cluster/services */
 export async function createService(
   body: API.CreateServiceRequest,

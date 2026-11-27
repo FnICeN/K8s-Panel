@@ -140,6 +140,20 @@ public class ClusterController {
         return ResultUtils.success(podAllSpec);
     }
 
+    @GetMapping(value="/pods/{namespace}/{pod_name}/logs", produces = "application/json")
+    @Operation(summary = "获取某个 Pod 的容器日志")
+    public BaseResponse<String> getPodLog(@PathVariable("namespace") String namespace,
+                                          @PathVariable("pod_name") String name,
+                                          @RequestParam(value = "container", required = false) String container,
+                                          @RequestParam(value = "tailLines", required = false) Integer tailLines,
+                                          HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String logs = podService.getPodLog(user.getIdToken(), namespace, name, container, tailLines);
+        ThrowUtils.throwIf(logs == null, ErrorCode.NOT_FOUND_ERROR, "获取 Pod 日志失败");
+        return ResultUtils.success(logs);
+    }
+
     @GetMapping(value="/deployments", produces = "application/json")
     @Operation(summary = "获取所有deployment")
     public BaseResponse<K8sListResponse<DeploymentVO>> getDeploymentsAll(HttpServletRequest request) {
