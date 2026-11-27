@@ -4,19 +4,20 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
   createDeployment,
+  createConfigMap,
   createNamespace,
   createPod,
   createService,
 } from '@/api/clusterController.ts'
 
-type ResourceType = 'Pod' | 'Deployment' | 'Service' | 'Namespace'
+type ResourceType = 'Pod' | 'Deployment' | 'Service' | 'Namespace' | 'ConfigMap'
 
 type CreatedMeta = { namespace?: string; name?: string } | undefined
 
 const resourceConfigs: Record<
   ResourceType,
   {
-    create: (yaml: string, dryRun: boolean) => Promise<{ code?: number; metadata?: CreatedMeta }>
+    create: (yaml: string, dryRun: boolean) => Promise<{ code?: number; metadata?: CreatedMeta; outputYaml?: string }>
     detailPath: (meta: CreatedMeta) => string | undefined
   }
 > = {
@@ -51,6 +52,17 @@ const resourceConfigs: Record<
     },
     detailPath: () => '/namespaces',
   },
+  ConfigMap: {
+    create: async (yaml, dryRun) => {
+      const response = await createConfigMap({ yaml }, { params: { dryRun } })
+      return {
+        code: response.data.code,
+        metadata: response.data.data?.resource?.metadata,
+        outputYaml: response.data.data?.yaml,
+      }
+    },
+    detailPath: () => undefined,
+  },
 }
 
 const router = useRouter()
@@ -60,10 +72,12 @@ const yamlContent = ref('')
 const deploying = ref(false)
 const dryRun = ref(false)
 const dryRunSucceeded = ref(false)
+const previewYaml = ref('')
 const lineNumberOffset = ref(0)
 
 watch([resourceType, yamlContent, dryRun], () => {
   dryRunSucceeded.value = false
+  previewYaml.value = ''
 })
 
 const resourceOptions = (Object.keys(resourceConfigs) as ResourceType[]).map((type) => ({
@@ -79,6 +93,7 @@ const lineNumbers = computed(() => {
 const open = () => {
   dryRun.value = false
   dryRunSucceeded.value = false
+  previewYaml.value = ''
   visible.value = true
 }
 
@@ -100,6 +115,7 @@ const handleDeploy = async () => {
   const submittedDryRun = dryRun.value
   deploying.value = true
   dryRunSucceeded.value = false
+  previewYaml.value = ''
   try {
     const result = await config.create(yamlContent.value, submittedDryRun)
     if (result.code !== 0) {
@@ -108,6 +124,7 @@ const handleDeploy = async () => {
 
     if (submittedDryRun) {
       dryRunSucceeded.value = true
+      previewYaml.value = result.outputYaml || ''
       message.success('试运行通过，资源未创建')
       return
     }
@@ -181,6 +198,10 @@ defineExpose({
         show-icon
         message="试运行通过，资源未创建。关闭试运行后可正式部署。"
       />
+      <div v-if="dryRunSucceeded && previewYaml" class="form-block">
+        <label class="form-label">服务端返回的 YAML</label>
+        <a-textarea :value="previewYaml" :auto-size="{ minRows: 8, maxRows: 18 }" read-only />
+      </div>
 
       <div class="dialog-footer">
         <a-button @click="handleCancel">取消</a-button>

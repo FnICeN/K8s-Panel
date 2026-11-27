@@ -2,6 +2,22 @@
 /* eslint-disable */
 import request from '@/request'
 
+/** 创建 ConfigMap POST /cluster/configmaps */
+export async function createConfigMap(
+  body: { yaml: string },
+  options?: { [key: string]: any }
+) {
+  return request<{
+    code?: number
+    data?: { resource?: { metadata?: { name?: string; namespace?: string } }; yaml?: string }
+  }>('/cluster/configmaps', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data: body,
+    ...(options || {}),
+  })
+}
+
 /** 获取所有deployment GET /cluster/deployments */
 export async function getDeploymentsAll(options?: { [key: string]: any }) {
   return request<API.BaseResponseK8sListResponseDeploymentVO>('/cluster/deployments', {

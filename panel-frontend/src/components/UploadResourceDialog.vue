@@ -6,6 +6,7 @@ import { InboxOutlined } from '@ant-design/icons-vue'
 import type { UploadProps } from 'ant-design-vue'
 import {
   createDeployment,
+  createConfigMap,
   createNamespace,
   createPod,
   createService,
@@ -54,6 +55,13 @@ const resourceConfigs: Record<
     },
     detailPath: () => '/namespaces',
   },
+  ConfigMap: {
+    create: async (yaml) => {
+      const response = await createConfigMap({ yaml })
+      return { code: response.data.code, metadata: response.data.data?.resource?.metadata }
+    },
+    detailPath: () => undefined,
+  },
 }
 
 const router = useRouter()
@@ -76,7 +84,7 @@ const blockedReason = computed(() => {
   }
   if (!summary.value.kind) {
     return summary.value.rawKind
-      ? `暂不支持 ${summary.value.rawKind}，仅支持 Pod、Deployment、Service、Namespace`
+      ? `暂不支持 ${summary.value.rawKind}，仅支持 Pod、Deployment、Service、Namespace、ConfigMap`
       : '未找到 kind 字段，无法识别资源类型'
   }
   return ''

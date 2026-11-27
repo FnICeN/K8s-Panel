@@ -22,4 +22,10 @@ class K8sApiPathsTest {
         assertThat(K8sApiPaths.podLog("demo", "web-1", null, null))
                 .isEqualTo("/api/v1/namespaces/demo/pods/web-1/log");
     }
+
+    @Test
+    void configMapDryRunUsesNamespacedCreateEndpoint() {
+        assertThat(K8sApiPaths.withDryRun(K8sApiPaths.namespaceConfigMaps("test-loa"), true))
+                .isEqualTo("/api/v1/namespaces/test-loa/configmaps?dryRun=All");
+    }
 }

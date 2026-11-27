@@ -14,6 +14,7 @@ import com.ficn.panel.model.entity.vo.NodeVO;
 import com.ficn.panel.model.entity.vo.PodVO;
 import com.ficn.panel.model.entity.vo.ServiceVO;
 import com.ficn.panel.service.cluster.DeploymentService;
+import com.ficn.panel.service.cluster.ConfigMapService;
 import com.ficn.panel.service.cluster.NamespaceService;
 import com.ficn.panel.service.cluster.NodeService;
 import com.ficn.panel.service.cluster.PodService;
@@ -40,6 +41,20 @@ public class ClusterController {
     private ServiceService serviceService;
     @Resource
     private DeploymentService deploymentService;
+    @Resource
+    private ConfigMapService configMapService;
+
+    @PostMapping(value="/configmaps", produces = "application/json")
+    @Operation(summary = "创建 ConfigMap，支持服务端试运行")
+    public BaseResponse<ConfigMapCreateResponse> createConfigMap(
+            @RequestBody(required = false) CreateConfigMapRequest createConfigMapRequest,
+            @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun,
+            HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String yaml = createConfigMapRequest == null ? null : createConfigMapRequest.getYaml();
+        return ResultUtils.success(configMapService.createConfigMap(user.getIdToken(), yaml, dryRun));
+    }
 
     @GetMapping("/nodes")
     @Operation(summary = "获取所有节点")

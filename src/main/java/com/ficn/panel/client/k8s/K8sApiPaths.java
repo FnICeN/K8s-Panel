@@ -59,6 +59,10 @@ final class K8sApiPaths {
         return "/api/v1/namespaces/" + encodeRequired(namespace, "namespace") + "/services";
     }
 
+    static String namespaceConfigMaps(String namespace) {
+        return "/api/v1/namespaces/" + encodeRequired(namespace, "namespace") + "/configmaps";
+    }
+
     static String service(String namespace, String serviceName) {
         return namespaceServices(namespace) + "/" + encodeRequired(serviceName, "serviceName");
     }
