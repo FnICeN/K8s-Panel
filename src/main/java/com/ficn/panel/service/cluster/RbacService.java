@@ -3,6 +3,7 @@ package com.ficn.panel.service.cluster;
 import com.ficn.panel.client.k8s.RbacApi;
 import com.ficn.panel.model.dto.cluster.K8sListResponse;
 import com.ficn.panel.model.entity.vo.RbacResourceVO;
+import com.ficn.panel.parser.K8sResourceYamlParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,12 @@ public class RbacService {
 
     public RbacResourceVO role(String token, String namespace, String name) {
         return rbacApi.role(token, namespace, name);
+    }
+
+    public RbacResourceVO createRole(String token, String yaml, boolean dryRun) {
+        K8sResourceYamlParser.ParsedResource resource =
+                K8sResourceYamlParser.parseNamespaced(yaml, "Role", "rbac.authorization.k8s.io/v1");
+        return rbacApi.createRole(token, resource.namespace(), resource.body(), dryRun);
     }
 
     public K8sListResponse<RbacResourceVO> clusterRoles(String token) {

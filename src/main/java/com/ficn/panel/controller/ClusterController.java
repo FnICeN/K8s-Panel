@@ -61,6 +61,18 @@ public class ClusterController {
         return ResultUtils.success(result);
     }
 
+    @PostMapping("/roles")
+    @Operation(summary = "创建 Role，支持服务端试运行")
+    public BaseResponse<RbacResourceVO> createRole(@RequestBody(required = false) CreateRoleRequest body,
+                                                   @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun,
+                                                   HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        RbacResourceVO result = rbacService.createRole(user.getIdToken(), body == null ? null : body.getYaml(), dryRun);
+        ThrowUtils.throwIf(result == null, ErrorCode.OPERATION_ERROR, "创建 Role 未返回资源");
+        return ResultUtils.success(result);
+    }
+
     @GetMapping("/roles/{namespace}/{name}")
     @Operation(summary = "查询 Role 详情")
     public BaseResponse<RbacResourceVO> getRole(@PathVariable String namespace, @PathVariable String name,

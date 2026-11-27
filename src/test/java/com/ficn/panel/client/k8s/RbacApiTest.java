@@ -54,4 +54,17 @@ class RbacApiTest {
         assertThat(binding.getRoleRef().getName()).isEqualTo("view");
         assertThat(binding.getSubjects().get(0).getName()).isEqualTo("worker");
     }
+
+    @Test
+    void createRoleAddsServerDryRunQueryOnlyWhenRequested() {
+        K8sHttpClient http = mock(K8sHttpClient.class);
+        RbacApi api = new RbacApi(http);
+        api.createRole("token", "test-loa", java.util.Map.of("kind", "Role"), true);
+        api.createRole("token", "test-loa", java.util.Map.of("kind", "Role"), false);
+
+        verify(http).post(eq("token"), eq(K8sApiPaths.namespaceRoles("test-loa") + "?dryRun=All"),
+                any(), eq(RbacResourceVO.class));
+        verify(http).post(eq("token"), eq(K8sApiPaths.namespaceRoles("test-loa")),
+                any(), eq(RbacResourceVO.class));
+    }
 }

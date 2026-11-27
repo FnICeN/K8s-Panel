@@ -34,3 +34,7 @@ export function getRbac(kind: RbacKind, name: string, namespace?: string) {
     : `/cluster/${kind}/${encodeURIComponent(namespace || '')}/${encodeURIComponent(name)}`
   return request.get<ApiResponse<RbacResource>>(path)
 }
+
+export function createRole(yaml: string, dryRun = false) {
+  return request.post<ApiResponse<RbacResource>>('/cluster/roles', { yaml }, { params: { dryRun } })
+}

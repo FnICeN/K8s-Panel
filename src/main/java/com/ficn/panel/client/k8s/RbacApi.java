@@ -20,6 +20,12 @@ public class RbacApi {
         return k8sHttpClient.get(token, K8sApiPaths.role(namespace, name), RbacResourceVO.class);
     }
 
+    public RbacResourceVO createRole(String token, String namespace, Object body, boolean dryRun) {
+        return k8sHttpClient.post(token,
+                K8sApiPaths.withDryRun(K8sApiPaths.namespaceRoles(namespace), dryRun),
+                body, RbacResourceVO.class);
+    }
+
     public K8sListResponse<RbacResourceVO> clusterRoles(String token) {
         return k8sHttpClient.get(token, K8sApiPaths.CLUSTER_ROLES, new ParameterizedTypeReference<>() {});
     }

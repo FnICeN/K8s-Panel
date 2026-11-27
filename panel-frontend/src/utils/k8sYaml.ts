@@ -1,4 +1,4 @@
-export type ResourceType = 'Pod' | 'Deployment' | 'Service' | 'Namespace' | 'ConfigMap'
+export type ResourceType = 'Pod' | 'Deployment' | 'Service' | 'Namespace' | 'ConfigMap' | 'Role'
 
 export interface K8sYamlSummary {
   kind?: ResourceType
@@ -8,7 +8,7 @@ export interface K8sYamlSummary {
   documentCount: number
 }
 
-const SUPPORTED_KINDS = new Set<string>(['Pod', 'Deployment', 'Service', 'Namespace', 'ConfigMap'])
+const SUPPORTED_KINDS = new Set<string>(['Pod', 'Deployment', 'Service', 'Namespace', 'ConfigMap', 'Role'])
 
 export function summarizeK8sYaml(yaml: string): K8sYamlSummary {
   const documents = splitDocuments(yaml.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n'))
