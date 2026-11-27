@@ -20,6 +20,7 @@ import com.ficn.panel.service.cluster.NamespaceService;
 import com.ficn.panel.service.cluster.NodeService;
 import com.ficn.panel.service.cluster.PodService;
 import com.ficn.panel.service.cluster.RbacService;
+import com.ficn.panel.service.cluster.GatekeeperService;
 import com.ficn.panel.service.cluster.ServiceService;
 import com.ficn.panel.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,6 +50,28 @@ public class ClusterController {
     private ConfigMapService configMapService;
     @Resource
     private RbacService rbacService;
+    @Resource
+    private GatekeeperService gatekeeperService;
+
+    @GetMapping("/gatekeeper/policies")
+    @Operation(summary = "列出 Gatekeeper 策略模板和全部约束实例")
+    public BaseResponse<GatekeeperPoliciesResponse> getGatekeeperPolicies(HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        return ResultUtils.success(gatekeeperService.policies(user.getIdToken()));
+    }
+
+    @PatchMapping("/gatekeeper/constraints/{resource}/{name}/annotations/preview")
+    @Operation(summary = "服务端试运行 Gatekeeper 约束注解更新")
+    public BaseResponse<GatekeeperAnnotationResponse> previewGatekeeperAnnotation(
+            @PathVariable String resource, @PathVariable String name,
+            @RequestBody GatekeeperAnnotationRequest body, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        ThrowUtils.throwIf(body == null, ErrorCode.PARAMS_ERROR, "注解内容不能为空");
+        return ResultUtils.success(gatekeeperService.previewAnnotation(user.getIdToken(), resource, name,
+                body.key(), body.value()));
+    }
 
     @GetMapping("/roles")
     @Operation(summary = "查询 Role 列表，可按命名空间筛选")

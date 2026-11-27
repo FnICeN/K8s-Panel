@@ -48,4 +48,13 @@ class K8sApiPathsTest {
                 K8sApiPaths.podEphemeralContainers("test-loa", "existing-pod"), true))
                 .isEqualTo("/api/v1/namespaces/test-loa/pods/existing-pod/ephemeralcontainers?dryRun=All");
     }
+
+    @Test
+    void gatekeeperConstraintDryRunTargetsClusterScopedResource() {
+        assertThat(K8sApiPaths.GATEKEEPER_TEMPLATES)
+                .isEqualTo("/apis/templates.gatekeeper.sh/v1/constrainttemplates");
+        assertThat(K8sApiPaths.withDryRun(
+                K8sApiPaths.gatekeeperConstraint("v1beta1", "ubaloaaccesses", "uba-loa-access"), true))
+                .isEqualTo("/apis/constraints.gatekeeper.sh/v1beta1/ubaloaaccesses/uba-loa-access?dryRun=All");
+    }
 }

@@ -188,7 +188,7 @@ if (typeof window !== 'undefined') {
   }
 }
 
-const clusterPrefixes = ['/health', '/nodes', '/pods', '/deployments', '/namespaces', '/services', '/roles']
+const clusterPrefixes = ['/health', '/nodes', '/pods', '/deployments', '/namespaces', '/services', '/roles', '/gatekeeper']
 
 const isClusterPage = computed(() =>
   clusterPrefixes.some((prefix) => route.path === prefix || route.path.startsWith(`${prefix}/`)),
@@ -223,6 +223,7 @@ const items: ItemType[] = reactive([
     getItem('命名空间管理（Namespace）', '/namespaces'),
     getItem('服务发现（Service）', '/services'),
     getItem('角色与角色绑定（Role）', '/roles'),
+    getItem('Gatekeeper 策略管理', '/gatekeeper'),
   ]),
   getItem('备份管理', '/backup', () => h(DatabaseOutlined)),
   getItem('云网监控仪表盘', '/dashboard', () => h(FundOutlined)),
@@ -366,6 +367,9 @@ function updateBreadcrumb(path: string) {
   } else if (path.startsWith('/roles')) {
     items.push({ title: '天基云网管理', path: '/' })
     items.push({ title: '角色与角色绑定（Role）', path: '/roles' })
+  } else if (path.startsWith('/gatekeeper')) {
+    items.push({ title: '天基云网管理', path: '/' })
+    items.push({ title: 'Gatekeeper 策略管理', path: '/gatekeeper' })
   } else if (path === '/audit-alerts') {
     items.push({ title: '审计告警', path: '/audit-alerts' })
   } else if (path === '/backup') {

@@ -19,9 +19,21 @@ final class K8sApiPaths {
     static final String ROLES = "/apis/rbac.authorization.k8s.io/v1/roles";
     static final String CLUSTER_ROLES = "/apis/rbac.authorization.k8s.io/v1/clusterroles";
     static final String ROLE_BINDINGS = "/apis/rbac.authorization.k8s.io/v1/rolebindings";
+    static final String GATEKEEPER_TEMPLATES = "/apis/templates.gatekeeper.sh/v1/constrainttemplates";
+    static final String GATEKEEPER_CONSTRAINT_GROUP = "/apis/constraints.gatekeeper.sh";
+    static final String GATEKEEPER_MUTATION_GROUP = "/apis/mutations.gatekeeper.sh";
 
     static String withDryRun(String path, boolean dryRun) {
         return dryRun ? path + "?dryRun=All" : path;
+    }
+
+    static String gatekeeperConstraints(String version, String resource) {
+        return GATEKEEPER_CONSTRAINT_GROUP + "/" + encodeRequired(version, "version")
+                + "/" + encodeRequired(resource, "resource");
+    }
+
+    static String gatekeeperConstraint(String version, String resource, String name) {
+        return gatekeeperConstraints(version, resource) + "/" + encodeRequired(name, "name");
     }
 
     private K8sApiPaths() {
