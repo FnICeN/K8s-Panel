@@ -21,6 +21,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public DeviceCodeResponse getDeviceCode(String scope) {
+        OidcClient oidcClient = oidcPropertiesConfig.createOidcClient(scope);
+        return oidcClient.getDeviceCode();
+    }
+
+    @Override
     public PollTokenResponse pollToken(String deviceCode) {
         OidcClient oidcClient = oidcPropertiesConfig.createOidcClient();
         PollTokenResponse pollToken = oidcClient.pollToken(deviceCode);

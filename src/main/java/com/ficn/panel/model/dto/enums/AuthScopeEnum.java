@@ -11,6 +11,7 @@ public enum AuthScopeEnum {
     FIRST_AUTH("初次认证", "openid Fauth"),
     RE_AUTH_COMMON("再次认证", "openid Fauth"),
     RE_AUTH_TOTP("TOTP增强认证", "openid Reauth TOTP"),
+    RE_AUTH_SQ("SQ增强认证", "openid Reauth SQ"),
     RE_AUTH_DEVICE("设备增强认证", "openid Reauth TOTP DeviceAuthen");
 
     private final String text;

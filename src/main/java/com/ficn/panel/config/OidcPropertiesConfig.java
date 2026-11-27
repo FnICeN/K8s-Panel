@@ -35,4 +35,13 @@ public class OidcPropertiesConfig {
     public OidcClient createOidcClient(AuthScopeEnum authScopeEnum) {
         return new OidcClient(issuer, clientId, clientSecret, authScopeEnum.getScope(), restTemplate);
     }
+
+    /**
+     * 按指定的 scope 字符串创建OidcClient（支持 openid Reauth 加多个可选 scope 的组合）
+     * @param scope 规范化后的 scope 字符串
+     * @return OidcClient
+     */
+    public OidcClient createOidcClient(String scope) {
+        return new OidcClient(issuer, clientId, clientSecret, scope, restTemplate);
+    }
 }

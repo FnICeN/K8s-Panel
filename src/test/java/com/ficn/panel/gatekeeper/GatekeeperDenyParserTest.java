@@ -39,6 +39,52 @@ class GatekeeperDenyParserTest {
     }
 
     @Test
+    void parsesSingleOptionalFactorScope() {
+        Optional<GatekeeperReauthChallenge> result = parser.parse(forbidden(gatekeeperBody(
+                "SCOPE:openid Reauth SQ")));
+
+        assertThat(result).isPresent();
+        assertThat(result.get().scope()).isEqualTo("openid Reauth SQ");
+        assertThat(result.get().authScopeEnum()).isEqualTo(AuthScopeEnum.RE_AUTH_SQ);
+    }
+
+    @Test
+    void parsesCombinedFactorScopes() {
+        Optional<GatekeeperReauthChallenge> result = parser.parse(forbidden(gatekeeperBody(
+                "SCOPE:openid Reauth SQ DeviceAuth")));
+
+        assertThat(result).isPresent();
+        assertThat(result.get().scope()).isEqualTo("openid Reauth SQ DeviceAuth");
+        assertThat(result.get().authScopeEnum()).isEqualTo(AuthScopeEnum.RE_AUTH_DEVICE);
+    }
+
+    @Test
+    void parsesCombinedFactorScopesInAnyOrder() {
+        Optional<GatekeeperReauthChallenge> result = parser.parse(forbidden(gatekeeperBody(
+                "SCOPE:openid Reauth TOTP SQ")));
+
+        assertThat(result).isPresent();
+        assertThat(result.get().scope()).isEqualTo("openid Reauth TOTP SQ");
+        assertThat(result.get().authScopeEnum()).isEqualTo(AuthScopeEnum.RE_AUTH_TOTP);
+    }
+
+    @Test
+    void normalisesTokenCase() {
+        Optional<GatekeeperReauthChallenge> result = parser.parse(forbidden(gatekeeperBody(
+                "SCOPE:openid reauth sq")));
+
+        assertThat(result).isPresent();
+        assertThat(result.get().scope()).isEqualTo("openid Reauth SQ");
+        assertThat(result.get().authScopeEnum()).isEqualTo(AuthScopeEnum.RE_AUTH_SQ);
+    }
+
+    @Test
+    void ignoresScopeWithoutBaseTokens() {
+        assertThat(parser.parse(forbidden(gatekeeperBody("SCOPE:Reauth TOTP")))).isEmpty();
+        assertThat(parser.parse(forbidden(gatekeeperBody("SCOPE:openid TOTP")))).isEmpty();
+    }
+
+    @Test
     void parsesMatchingScopesFromMultiplePolicyLines() {
         Optional<GatekeeperReauthChallenge> result = parser.parse(forbidden(gatekeeperBody(
                 "SCOPE:openid Reauth TOTP DeviceAuthen\n[another policy] SCOPE:openid Reauth TOTP DeviceAuthen")));

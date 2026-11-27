@@ -33,7 +33,7 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getMsg()).isEqualTo("需要重新认证");
         assertThat(response.getData().getAuthScope()).isEqualTo("RE_AUTH_DEVICE");
         assertThat(response.getData().getScope()).isEqualTo("openid Reauth TOTP DeviceAuthen");
-        assertThat(session.getAttribute(REQUIRED_AUTH_SCOPE)).isEqualTo(AuthScopeEnum.RE_AUTH_DEVICE);
+        assertThat(session.getAttribute(REQUIRED_AUTH_SCOPE)).isEqualTo("openid Reauth TOTP DeviceAuthen");
         assertThat(session.getAttribute(USER_LOGIN_STATE)).isNull();
     }
 }

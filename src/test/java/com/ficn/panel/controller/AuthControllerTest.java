@@ -51,6 +51,21 @@ class AuthControllerTest {
     }
 
     @Test
+    void getDeviceCodeUsesCombinedScopeStringFromSession() {
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(REQUIRED_AUTH_SCOPE, "openid Reauth TOTP SQ");
+        DeviceCodeResponse deviceCodeResponse = new DeviceCodeResponse();
+        deviceCodeResponse.setDeviceCode("device-code");
+        when(authService.getDeviceCode("openid Reauth TOTP SQ")).thenReturn(deviceCodeResponse);
+
+        BaseResponse<DeviceCodeResponse> response = authController.getDeviceCode(session);
+
+        assertThat(response.getCode()).isZero();
+        assertThat(session.getAttribute("device_code")).isEqualTo("device-code");
+        verify(authService).getDeviceCode("openid Reauth TOTP SQ");
+    }
+
+    @Test
     void getDeviceCodeFallsBackToFirstAuthWithoutRequiredScope() {
         MockHttpSession session = new MockHttpSession();
         DeviceCodeResponse deviceCodeResponse = new DeviceCodeResponse();

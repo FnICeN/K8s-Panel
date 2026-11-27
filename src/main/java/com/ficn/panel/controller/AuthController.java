@@ -13,6 +13,7 @@ import com.ficn.panel.service.user.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import static com.ficn.panel.constant.UserConstant.REQUIRED_AUTH_SCOPE;
@@ -29,16 +30,25 @@ public class AuthController {
 
     @GetMapping("/devicecode")
     public BaseResponse<DeviceCodeResponse> getDeviceCode(HttpSession session) {
-        // TODO: 临时使用 FIRST_AUTH 认证类型，之后需要根据当前认证状态动态选择
         Object requiredScope = session.getAttribute(REQUIRED_AUTH_SCOPE);
-        AuthScopeEnum authScopeEnum = requiredScope instanceof AuthScopeEnum
-                ? (AuthScopeEnum) requiredScope
-                : AuthScopeEnum.FIRST_AUTH;
-        DeviceCodeResponse deviceCodeResponse = authService.getDeviceCode(authScopeEnum);
+        DeviceCodeResponse deviceCodeResponse = requestDeviceCode(requiredScope);
         ThrowUtils.throwIf(deviceCodeResponse == null, ErrorCode.OPERATION_ERROR, "获取设备码认证地址失败");
         // 保存device_code到session
         session.setAttribute("device_code", deviceCodeResponse.getDeviceCode());
         return ResultUtils.success(deviceCodeResponse);
+    }
+
+    /**
+     * session 里可能存的是 scope 字符串（Gatekeeper 要求的组合），也可能是旧会话里的认证类型枚举。
+     */
+    private DeviceCodeResponse requestDeviceCode(Object requiredScope) {
+        if (requiredScope instanceof String scope && StringUtils.hasText(scope)) {
+            return authService.getDeviceCode(scope);
+        }
+        AuthScopeEnum authScopeEnum = requiredScope instanceof AuthScopeEnum enumValue
+                ? enumValue
+                : AuthScopeEnum.FIRST_AUTH;
+        return authService.getDeviceCode(authScopeEnum);
     }
 
     @GetMapping("/polltoken")

@@ -23,7 +23,8 @@ public class GlobalExceptionHandler {
             GatekeeperReauthRequiredException e, HttpServletRequest request) {
         log.warn("Gatekeeper reauth required for scope: {}", e.getScope());
         HttpSession session = request.getSession();
-        session.setAttribute(REQUIRED_AUTH_SCOPE, e.getAuthScopeEnum());
+        // 存规范化后的 scope 字符串，可能是固定值，也可能是组合（如 openid Reauth TOTP SQ）
+        session.setAttribute(REQUIRED_AUTH_SCOPE, e.getScope());
         session.removeAttribute(USER_LOGIN_STATE);
 
         GatekeeperReauthResponse response = new GatekeeperReauthResponse(
