@@ -25,6 +25,8 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/cluster")
 public class ClusterController {
@@ -167,6 +169,20 @@ public class ClusterController {
         String logs = podService.getPodLog(user.getIdToken(), namespace, name, container, tailLines);
         ThrowUtils.throwIf(logs == null, ErrorCode.NOT_FOUND_ERROR, "获取 Pod 日志失败");
         return ResultUtils.success(logs);
+    }
+
+    @PatchMapping(value="/pods/{namespace}/{pod_name}/ephemeralcontainers", produces = "application/json")
+    @Operation(summary = "补丁更新 Pod 临时容器，默认服务端试运行")
+    public BaseResponse<PodEphemeralContainersPatchResponse> patchPodEphemeralContainers(
+            @PathVariable("namespace") String namespace,
+            @PathVariable("pod_name") String name,
+            @RequestBody Map<String, Object> patch,
+            @RequestParam(value = "dryRun", defaultValue = "true") boolean dryRun,
+            HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        return ResultUtils.success(podService.patchEphemeralContainers(
+                user.getIdToken(), namespace, name, patch, dryRun));
     }
 
     @GetMapping(value="/deployments", produces = "application/json")

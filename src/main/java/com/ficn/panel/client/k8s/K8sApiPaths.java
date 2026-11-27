@@ -40,6 +40,10 @@ final class K8sApiPaths {
         return namespacePods(namespace) + "/" + encodeRequired(podName, "podName");
     }
 
+    static String podEphemeralContainers(String namespace, String podName) {
+        return pod(namespace, podName) + "/ephemeralcontainers";
+    }
+
     static String namespacePodsByLabels(String namespace, String labelSelector) {
         return namespacePods(namespace) + queryParam("labelSelector", labelSelector);
     }

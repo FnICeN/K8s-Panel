@@ -2,6 +2,23 @@
 /* eslint-disable */
 import request from '@/request'
 
+/** Merge Patch Pod 的 ephemeralcontainers 子资源 */
+export async function patchPodEphemeralContainers(
+  params: { namespace: string; pod_name: string; dryRun?: boolean },
+  patch: Record<string, unknown>,
+) {
+  const { namespace, pod_name, dryRun = true } = params
+  return request<{
+    code?: number
+    data?: { resource?: Record<string, unknown>; yaml?: string }
+  }>(`/cluster/pods/${encodeURIComponent(namespace)}/${encodeURIComponent(pod_name)}/ephemeralcontainers`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    params: { dryRun },
+    data: patch,
+  })
+}
+
 /** 创建 ConfigMap POST /cluster/configmaps */
 export async function createConfigMap(
   body: { yaml: string },

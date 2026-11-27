@@ -66,14 +66,25 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
     }
 
     @Override
+    public <T> T patchMerge(String token, String path, Object body, Class<T> responseType) {
+        return exchange(token, path, HttpMethod.PATCH, body, responseType,
+                MediaType.APPLICATION_JSON, MediaType.valueOf("application/merge-patch+json"));
+    }
+
+    @Override
     public void delete(String token, String path) {
         exchange(token, path, HttpMethod.DELETE, null, Void.class, MediaType.APPLICATION_JSON);
     }
 
     private <T> T exchange(String token, String path, HttpMethod method, Object body, Class<T> responseType,
                           MediaType accept) {
+        return exchange(token, path, method, body, responseType, accept, MediaType.APPLICATION_JSON);
+    }
+
+    private <T> T exchange(String token, String path, HttpMethod method, Object body, Class<T> responseType,
+                          MediaType accept, MediaType contentType) {
         try {
-            return restTemplate.exchange(URI.create(buildUrl(path)), method, buildEntity(token, body, accept), responseType)
+            return restTemplate.exchange(URI.create(buildUrl(path)), method, buildEntity(token, body, accept, contentType), responseType)
                     .getBody();
         } catch (HttpClientErrorException.NotFound e) {
             return null;
@@ -85,7 +96,7 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
     private <T> T exchange(String token, String path, HttpMethod method, Object body,
                           ParameterizedTypeReference<T> responseType, MediaType accept) {
         try {
-            return restTemplate.exchange(URI.create(buildUrl(path)), method, buildEntity(token, body, accept), responseType)
+            return restTemplate.exchange(URI.create(buildUrl(path)), method, buildEntity(token, body, accept, MediaType.APPLICATION_JSON), responseType)
                     .getBody();
         } catch (HttpClientErrorException.NotFound e) {
             return null;
@@ -138,12 +149,12 @@ public class RestTemplateK8sHttpClient implements K8sHttpClient {
         return "策略 " + matcher.group(1) + "-" + matcher.group(2) + " 触发";
     }
 
-    private HttpEntity<Object> buildEntity(String token, Object body, MediaType accept) {
+    private HttpEntity<Object> buildEntity(String token, Object body, MediaType accept, MediaType contentType) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(token);
         headers.setAccept(Collections.singletonList(accept));
         if (body != null) {
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setContentType(contentType);
         }
         return new HttpEntity<>(body, headers);
     }

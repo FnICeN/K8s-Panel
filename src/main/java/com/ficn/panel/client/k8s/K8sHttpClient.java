@@ -16,5 +16,7 @@ public interface K8sHttpClient {
 
     <T> T put(String token, String path, Object body, Class<T> responseType);
 
+    <T> T patchMerge(String token, String path, Object body, Class<T> responseType);
+
     void delete(String token, String path);
 }

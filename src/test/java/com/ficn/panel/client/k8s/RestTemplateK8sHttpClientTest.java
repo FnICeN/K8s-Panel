@@ -17,6 +17,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -28,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -117,6 +120,28 @@ class RestTemplateK8sHttpClientTest {
                     assertThat(e.getCode()).isEqualTo(ErrorCode.FORBIDDEN_ERROR.getCode());
                     assertThat(e.getMessage()).isEqualTo("No permission to access Kubernetes resource");
                 });
+    }
+
+    @Test
+    void mergePatchUsesPatchMethodAndMergePatchContentType() {
+        Map<String, Object> body = Map.of("spec", Map.of("ephemeralContainers",
+                java.util.List.of(Map.of("name", "loa-debug-test", "image", "busybox:1.36"))));
+        String path = "/api/v1/namespaces/test-loa/pods/existing-pod/ephemeralcontainers?dryRun=All";
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.PATCH), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(Map.of("kind", "Pod")));
+
+        k8sHttpClient.patchMerge("token", path, body, Map.class);
+
+        org.mockito.ArgumentCaptor<URI> uri = org.mockito.ArgumentCaptor.forClass(URI.class);
+        @SuppressWarnings("unchecked")
+        org.mockito.ArgumentCaptor<HttpEntity<Object>> entity =
+                org.mockito.ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(uri.capture(), eq(HttpMethod.PATCH), entity.capture(), eq(Map.class));
+        assertThat(uri.getValue().getPath()).isEqualTo(path.split("\\?")[0]);
+        assertThat(uri.getValue().getQuery()).isEqualTo("dryRun=All");
+        assertThat(entity.getValue().getHeaders().getContentType())
+                .isEqualTo(MediaType.valueOf("application/merge-patch+json"));
+        assertThat(entity.getValue().getBody()).isEqualTo(body);
     }
 
     private static String gatekeeperBody() {

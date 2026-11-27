@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, h, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { getPod, getPodAll, getPodLog } from '@/api/clusterController.ts'
+import { getPod, getPodAll, getPodLog, patchPodEphemeralContainers } from '@/api/clusterController.ts'
 import { getNodeDisplayName } from '@/utils/nodeDisplayName.ts'
 import { RedoOutlined } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 
 const route = useRoute()
 const namespace = ref(route.params.namespace as string)
@@ -17,6 +17,66 @@ const yamlLoading = ref(false)
 const logsLoading = ref(false)
 const logs = ref('')
 const selectedContainer = ref<string>()
+const patchContent = ref(JSON.stringify({
+  spec: {
+    ephemeralContainers: [{
+      name: 'loa-debug-test',
+      image: 'busybox:1.36',
+      command: ['sh', '-c', 'sleep 3600'],
+    }],
+  },
+}, null, 2))
+const patchDryRun = ref(true)
+const patching = ref(false)
+const patchResultYaml = ref('')
+
+const submitEphemeralPatch = async (patch: Record<string, unknown>, dryRun: boolean) => {
+  try {
+    patching.value = true
+    patchResultYaml.value = ''
+    const response = await patchPodEphemeralContainers({
+      namespace: namespace.value,
+      pod_name: podName.value,
+      dryRun,
+    }, patch)
+    if (response.data.code === 0) {
+      patchResultYaml.value = response.data.data?.yaml || ''
+      message.success(dryRun ? '服务端试运行通过，未修改 Pod' : '临时容器已添加')
+      if (!dryRun) {
+        yamlContent.value = ''
+        loadPodData()
+      }
+    }
+  } catch (error) {
+    console.error('Failed to patch Pod ephemeral containers:', error)
+    message.error('更新临时容器失败')
+  } finally {
+    patching.value = false
+  }
+}
+
+const handleEphemeralPatch = () => {
+  let patch: Record<string, unknown>
+  try {
+    const parsed: unknown = JSON.parse(patchContent.value)
+    if (parsed === null || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error('invalid patch')
+    patch = parsed as Record<string, unknown>
+  } catch {
+    message.warning('请输入有效的 JSON 补丁对象')
+    return
+  }
+  if (patchDryRun.value) {
+    submitEphemeralPatch(patch, true)
+    return
+  }
+  Modal.confirm({
+    title: '确认添加临时容器',
+    content: `将更新 ${namespace.value}/${podName.value}。已添加的临时容器无法修改或移除。`,
+    okText: '确认更新',
+    okType: 'danger',
+    onOk: () => submitEphemeralPatch(patch, false),
+  })
+}
 
 const loadPodData = async () => {
   try {
@@ -265,6 +325,24 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
           </a-spin>
         </a-tab-pane>
 
+        <a-tab-pane key="ephemeral" tab="临时容器">
+          <div class="ephemeral-editor">
+            <p>编辑 JSON Merge Patch，向本 Pod 中添加临时调试容器。</p>
+            <a-textarea v-model:value="patchContent" :auto-size="{ minRows: 10, maxRows: 22 }" />
+            <div class="ephemeral-actions">
+              <a-switch v-model:checked="patchDryRun" :disabled="patching" />
+              <span>服务端试运行</span>
+              <a-button type="primary" :loading="patching" @click="handleEphemeralPatch">
+                {{ patchDryRun ? '试运行' : '正式更新' }}
+              </a-button>
+            </div>
+            <div v-if="patchResultYaml">
+              <h3>服务端返回的 YAML</h3>
+              <a-textarea :value="patchResultYaml" :auto-size="{ minRows: 10, maxRows: 22 }" read-only />
+            </div>
+          </div>
+        </a-tab-pane>
+
         <a-tab-pane key="containers" tab="容器">
           <div class="containers-content">
             <a-card
@@ -346,6 +424,18 @@ const getRestartCount = (pod: API.PodSpecResponse) => {
 </template>
 
 <style scoped>
+.ephemeral-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ephemeral-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .logs-toolbar {
   display: flex;
   gap: 12px;

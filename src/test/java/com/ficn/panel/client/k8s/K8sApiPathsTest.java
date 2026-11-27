@@ -28,4 +28,11 @@ class K8sApiPathsTest {
         assertThat(K8sApiPaths.withDryRun(K8sApiPaths.namespaceConfigMaps("test-loa"), true))
                 .isEqualTo("/api/v1/namespaces/test-loa/configmaps?dryRun=All");
     }
+
+    @Test
+    void ephemeralContainerDryRunTargetsPodSubresource() {
+        assertThat(K8sApiPaths.withDryRun(
+                K8sApiPaths.podEphemeralContainers("test-loa", "existing-pod"), true))
+                .isEqualTo("/api/v1/namespaces/test-loa/pods/existing-pod/ephemeralcontainers?dryRun=All");
+    }
 }

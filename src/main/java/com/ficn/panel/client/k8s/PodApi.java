@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 @RequiredArgsConstructor
 public class PodApi {
@@ -41,5 +43,13 @@ public class PodApi {
 
     public String getLog(String token, String namespace, String podName, String container, Integer tailLines) {
         return k8sHttpClient.getText(token, K8sApiPaths.podLog(namespace, podName, container, tailLines));
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> patchEphemeralContainers(String token, String namespace, String podName,
+                                                         Object patch, boolean dryRun) {
+        return k8sHttpClient.patchMerge(token,
+                K8sApiPaths.withDryRun(K8sApiPaths.podEphemeralContainers(namespace, podName), dryRun),
+                patch, Map.class);
     }
 }
