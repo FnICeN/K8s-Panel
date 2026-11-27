@@ -7,6 +7,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class K8sApiPathsTest {
 
     @Test
+    void rbacPathsUseCorrectScopesAndEncodeNames() {
+        assertThat(K8sApiPaths.ROLES).isEqualTo("/apis/rbac.authorization.k8s.io/v1/roles");
+        assertThat(K8sApiPaths.CLUSTER_ROLES).isEqualTo("/apis/rbac.authorization.k8s.io/v1/clusterroles");
+        assertThat(K8sApiPaths.ROLE_BINDINGS).isEqualTo("/apis/rbac.authorization.k8s.io/v1/rolebindings");
+        assertThat(K8sApiPaths.role("team a", "reader"))
+                .isEqualTo("/apis/rbac.authorization.k8s.io/v1/namespaces/team%20a/roles/reader");
+        assertThat(K8sApiPaths.roleBinding("demo", "read only"))
+                .isEqualTo("/apis/rbac.authorization.k8s.io/v1/namespaces/demo/rolebindings/read%20only");
+        assertThat(K8sApiPaths.clusterRole("admin"))
+                .isEqualTo("/apis/rbac.authorization.k8s.io/v1/clusterroles/admin");
+    }
+
+    @Test
     void dryRunIsOnlyAddedWhenRequested() {
         String path = K8sApiPaths.namespacePods("demo");
 

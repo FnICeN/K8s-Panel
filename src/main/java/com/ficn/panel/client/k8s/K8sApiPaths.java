@@ -16,6 +16,9 @@ final class K8sApiPaths {
     static final String PODS = "/api/v1/pods";
     static final String NAMESPACES = "/api/v1/namespaces";
     static final String DEPLOYMENTS = "/apis/apps/v1/deployments";
+    static final String ROLES = "/apis/rbac.authorization.k8s.io/v1/roles";
+    static final String CLUSTER_ROLES = "/apis/rbac.authorization.k8s.io/v1/clusterroles";
+    static final String ROLE_BINDINGS = "/apis/rbac.authorization.k8s.io/v1/rolebindings";
 
     static String withDryRun(String path, boolean dryRun) {
         return dryRun ? path + "?dryRun=All" : path;
@@ -73,6 +76,26 @@ final class K8sApiPaths {
 
     static String namespaceDeployments(String namespace) {
         return "/apis/apps/v1/namespaces/" + encodeRequired(namespace, "namespace") + "/deployments";
+    }
+
+    static String namespaceRoles(String namespace) {
+        return "/apis/rbac.authorization.k8s.io/v1/namespaces/" + encodeRequired(namespace, "namespace") + "/roles";
+    }
+
+    static String role(String namespace, String name) {
+        return namespaceRoles(namespace) + "/" + encodeRequired(name, "name");
+    }
+
+    static String clusterRole(String name) {
+        return CLUSTER_ROLES + "/" + encodeRequired(name, "name");
+    }
+
+    static String namespaceRoleBindings(String namespace) {
+        return "/apis/rbac.authorization.k8s.io/v1/namespaces/" + encodeRequired(namespace, "namespace") + "/rolebindings";
+    }
+
+    static String roleBinding(String namespace, String name) {
+        return namespaceRoleBindings(namespace) + "/" + encodeRequired(name, "name");
     }
 
     static String deployment(String namespace, String deploymentName) {

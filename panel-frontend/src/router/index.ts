@@ -70,6 +70,11 @@ const router = createRouter({
           component: () => import('../pages/cluster/NamespaceManager.vue'),
         },
         {
+          path: 'roles',
+          name: 'roles',
+          component: () => import('../pages/cluster/RoleManager.vue'),
+        },
+        {
           path: 'backup',
           name: 'backup',
           component: () => import('../pages/BackupConsole.vue'),
