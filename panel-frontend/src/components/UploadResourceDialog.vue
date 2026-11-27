@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { InboxOutlined } from '@ant-design/icons-vue'
 import type { UploadProps } from 'ant-design-vue'
+import { createRole } from '@/api/rbac'
 import {
   createDeployment,
   createConfigMap,
@@ -20,47 +21,54 @@ const MAX_FILE_BYTES = 1024 * 1024
 const resourceConfigs: Record<
   ResourceType,
   {
-    create: (yaml: string) => Promise<{ code?: number; metadata?: CreatedMeta }>
+    create: (yaml: string, dryRun: boolean) => Promise<{ code?: number; metadata?: CreatedMeta }>
     detailPath: (meta: CreatedMeta) => string | undefined
   }
 > = {
   Pod: {
-    create: async (yaml) => {
-      const response = await createPod({ yaml })
+    create: async (yaml, dryRun) => {
+      const response = await createPod({ yaml }, { params: { dryRun } })
       return { code: response.data.code, metadata: response.data.data?.metadata }
     },
     detailPath: (meta) =>
       meta?.namespace && meta?.name ? `/pods/${meta.namespace}/${meta.name}` : undefined,
   },
   Deployment: {
-    create: async (yaml) => {
-      const response = await createDeployment({ yaml })
+    create: async (yaml, dryRun) => {
+      const response = await createDeployment({ yaml }, { params: { dryRun } })
       return { code: response.data.code, metadata: response.data.data?.metadata }
     },
     detailPath: (meta) =>
       meta?.namespace && meta?.name ? `/deployments/${meta.namespace}/${meta.name}` : undefined,
   },
   Service: {
-    create: async (yaml) => {
-      const response = await createService({ yaml })
+    create: async (yaml, dryRun) => {
+      const response = await createService({ yaml }, { params: { dryRun } })
       return { code: response.data.code, metadata: response.data.data?.metadata }
     },
     detailPath: (meta) =>
       meta?.namespace && meta?.name ? `/services/${meta.namespace}/${meta.name}` : undefined,
   },
   Namespace: {
-    create: async (yaml) => {
-      const response = await createNamespace({ yaml })
+    create: async (yaml, dryRun) => {
+      const response = await createNamespace({ yaml }, { params: { dryRun } })
       return { code: response.data.code, metadata: response.data.data?.metadata }
     },
     detailPath: () => '/namespaces',
   },
   ConfigMap: {
-    create: async (yaml) => {
-      const response = await createConfigMap({ yaml })
+    create: async (yaml, dryRun) => {
+      const response = await createConfigMap({ yaml }, { params: { dryRun } })
       return { code: response.data.code, metadata: response.data.data?.resource?.metadata }
     },
     detailPath: () => undefined,
+  },
+  Role: {
+    create: async (yaml, dryRun) => {
+      const response = await createRole(yaml, dryRun)
+      return { code: response.data.code, metadata: response.data.data?.metadata }
+    },
+    detailPath: (meta) => meta?.namespace ? `/roles?kind=roles&namespace=${encodeURIComponent(meta.namespace)}` : '/roles',
   },
 }
 
@@ -69,6 +77,8 @@ const visible = ref(false)
 const fileName = ref('')
 const yamlContent = ref('')
 const deploying = ref(false)
+const dryRun = ref(false)
+const dryRunSucceeded = ref(false)
 
 const summary = computed(() => summarizeK8sYaml(yamlContent.value))
 
@@ -84,7 +94,7 @@ const blockedReason = computed(() => {
   }
   if (!summary.value.kind) {
     return summary.value.rawKind
-      ? `暂不支持 ${summary.value.rawKind}，仅支持 Pod、Deployment、Service、Namespace、ConfigMap`
+      ? `暂不支持 ${summary.value.rawKind}，仅支持 Pod、Deployment、Service、Namespace、ConfigMap、Role`
       : '未找到 kind 字段，无法识别资源类型'
   }
   return ''
@@ -93,6 +103,8 @@ const blockedReason = computed(() => {
 const open = () => {
   fileName.value = ''
   yamlContent.value = ''
+  dryRun.value = false
+  dryRunSucceeded.value = false
   visible.value = true
 }
 
@@ -116,6 +128,7 @@ const beforeUpload: UploadProps['beforeUpload'] = (file) => {
     .then((text) => {
       fileName.value = file.name
       yamlContent.value = text.replace(/^\uFEFF/, '')
+      dryRunSucceeded.value = false
     })
     .catch(() => {
       message.error('读取文件失败')
@@ -134,10 +147,18 @@ const handleDeploy = async () => {
   }
 
   const config = resourceConfigs[summary.value.kind]
+  const submittedDryRun = dryRun.value
   deploying.value = true
+  dryRunSucceeded.value = false
   try {
-    const result = await config.create(yamlContent.value)
+    const result = await config.create(yamlContent.value, submittedDryRun)
     if (result.code !== 0) {
+      return
+    }
+
+    if (submittedDryRun) {
+      dryRunSucceeded.value = true
+      message.success('试运行通过，资源未创建')
       return
     }
 
@@ -149,8 +170,8 @@ const handleDeploy = async () => {
       router.push(path)
     }
   } catch (error) {
-    console.error(`部署 ${summary.value.kind} 失败:`, error)
-    message.error('部署失败')
+    console.error(`${submittedDryRun ? '试运行' : '部署'} ${summary.value.kind} 失败:`, error)
+    message.error(submittedDryRun ? '试运行失败' : '部署失败')
   } finally {
     deploying.value = false
   }
@@ -172,7 +193,7 @@ defineExpose({
     @cancel="handleCancel"
   >
     <div class="dialog-body">
-      <p class="dialog-description">选择 Kubernetes YAML 文件，确认资源类型后直接部署到集群</p>
+      <p class="dialog-description">选择 Kubernetes YAML 文件，确认资源类型后试运行或部署到集群</p>
 
       <a-upload-dragger
         :before-upload="beforeUpload"
@@ -184,7 +205,7 @@ defineExpose({
           <InboxOutlined />
         </p>
         <p class="ant-upload-text">{{ fileName ? '重新选择文件' : '点击或拖拽 YAML 文件到此处' }}</p>
-        <p class="ant-upload-hint">支持 .yaml / .yml，单个 Pod、Deployment、Service 或 Namespace</p>
+        <p class="ant-upload-hint">支持 .yaml / .yml，单个 Pod、Deployment、Service、Namespace、ConfigMap 或 Role</p>
       </a-upload-dragger>
 
       <div v-if="fileName" class="file-summary">
@@ -210,6 +231,12 @@ defineExpose({
 
       <pre v-if="yamlContent" class="yaml-preview">{{ yamlContent }}</pre>
 
+      <div class="dry-run-option">
+        <a-switch v-model:checked="dryRun" :disabled="deploying" @change="dryRunSucceeded = false" />
+        <span>试运行</span>
+      </div>
+      <a-alert v-if="dryRunSucceeded" type="success" show-icon message="服务端试运行通过，资源未创建。关闭试运行后可正式部署。" />
+
       <div class="dialog-footer">
         <a-button @click="handleCancel">取消</a-button>
         <a-button
@@ -218,7 +245,7 @@ defineExpose({
           :disabled="!fileName || !!blockedReason"
           @click="handleDeploy"
         >
-          部署
+          {{ dryRun ? '试运行' : '部署' }}
         </a-button>
       </div>
     </div>
@@ -289,6 +316,8 @@ defineExpose({
   justify-content: flex-end;
   gap: 12px;
 }
+
+.dry-run-option { display: flex; align-items: center; gap: 10px; color: var(--app-text); }
 
 :global(.upload-resource-modal .ant-modal) {
   top: 48px;

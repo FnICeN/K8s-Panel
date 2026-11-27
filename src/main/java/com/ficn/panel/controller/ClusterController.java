@@ -12,12 +12,15 @@ import com.ficn.panel.model.entity.vo.NamespaceVO;
 import com.ficn.panel.model.entity.vo.NodeMetricsVO;
 import com.ficn.panel.model.entity.vo.NodeVO;
 import com.ficn.panel.model.entity.vo.PodVO;
+import com.ficn.panel.model.entity.vo.RbacResourceVO;
 import com.ficn.panel.model.entity.vo.ServiceVO;
 import com.ficn.panel.service.cluster.DeploymentService;
 import com.ficn.panel.service.cluster.ConfigMapService;
 import com.ficn.panel.service.cluster.NamespaceService;
 import com.ficn.panel.service.cluster.NodeService;
 import com.ficn.panel.service.cluster.PodService;
+import com.ficn.panel.service.cluster.RbacService;
+import com.ficn.panel.service.cluster.GatekeeperService;
 import com.ficn.panel.service.cluster.ServiceService;
 import com.ficn.panel.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,6 +48,106 @@ public class ClusterController {
     private DeploymentService deploymentService;
     @Resource
     private ConfigMapService configMapService;
+    @Resource
+    private RbacService rbacService;
+    @Resource
+    private GatekeeperService gatekeeperService;
+
+    @GetMapping("/gatekeeper/policies")
+    @Operation(summary = "列出 Gatekeeper 策略模板和全部约束实例")
+    public BaseResponse<GatekeeperPoliciesResponse> getGatekeeperPolicies(HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        return ResultUtils.success(gatekeeperService.policies(user.getIdToken()));
+    }
+
+    @PatchMapping("/gatekeeper/constraints/{resource}/{name}/annotations/preview")
+    @Operation(summary = "服务端试运行 Gatekeeper 约束注解更新")
+    public BaseResponse<GatekeeperAnnotationResponse> previewGatekeeperAnnotation(
+            @PathVariable String resource, @PathVariable String name,
+            @RequestBody GatekeeperAnnotationRequest body, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        ThrowUtils.throwIf(body == null, ErrorCode.PARAMS_ERROR, "注解内容不能为空");
+        return ResultUtils.success(gatekeeperService.previewAnnotation(user.getIdToken(), resource, name,
+                body.key(), body.value()));
+    }
+
+    @GetMapping("/roles")
+    @Operation(summary = "查询 Role 列表，可按命名空间筛选")
+    public BaseResponse<K8sListResponse<RbacResourceVO>> getRoles(
+            @RequestParam(required = false) String namespace, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        K8sListResponse<RbacResourceVO> result = rbacService.roles(user.getIdToken(), namespace);
+        ThrowUtils.throwIf(result == null, ErrorCode.OPERATION_ERROR, "获取 Role 列表失败");
+        return ResultUtils.success(result);
+    }
+
+    @PostMapping("/roles")
+    @Operation(summary = "创建 Role，支持服务端试运行")
+    public BaseResponse<RbacResourceVO> createRole(@RequestBody(required = false) CreateRoleRequest body,
+                                                   @RequestParam(value = "dryRun", defaultValue = "false") boolean dryRun,
+                                                   HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        RbacResourceVO result = rbacService.createRole(user.getIdToken(), body == null ? null : body.getYaml(), dryRun);
+        ThrowUtils.throwIf(result == null, ErrorCode.OPERATION_ERROR, "创建 Role 未返回资源");
+        return ResultUtils.success(result);
+    }
+
+    @GetMapping("/roles/{namespace}/{name}")
+    @Operation(summary = "查询 Role 详情")
+    public BaseResponse<RbacResourceVO> getRole(@PathVariable String namespace, @PathVariable String name,
+                                                HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        RbacResourceVO result = rbacService.role(user.getIdToken(), namespace, name);
+        ThrowUtils.throwIf(result == null, ErrorCode.NOT_FOUND_ERROR, "Role 不存在");
+        return ResultUtils.success(result);
+    }
+
+    @GetMapping("/clusterroles")
+    @Operation(summary = "查询 ClusterRole 列表")
+    public BaseResponse<K8sListResponse<RbacResourceVO>> getClusterRoles(HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        K8sListResponse<RbacResourceVO> result = rbacService.clusterRoles(user.getIdToken());
+        ThrowUtils.throwIf(result == null, ErrorCode.OPERATION_ERROR, "获取 ClusterRole 列表失败");
+        return ResultUtils.success(result);
+    }
+
+    @GetMapping("/clusterroles/{name}")
+    @Operation(summary = "查询 ClusterRole 详情")
+    public BaseResponse<RbacResourceVO> getClusterRole(@PathVariable String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        RbacResourceVO result = rbacService.clusterRole(user.getIdToken(), name);
+        ThrowUtils.throwIf(result == null, ErrorCode.NOT_FOUND_ERROR, "ClusterRole 不存在");
+        return ResultUtils.success(result);
+    }
+
+    @GetMapping("/rolebindings")
+    @Operation(summary = "查询 RoleBinding 列表，可按命名空间筛选")
+    public BaseResponse<K8sListResponse<RbacResourceVO>> getRoleBindings(
+            @RequestParam(required = false) String namespace, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        K8sListResponse<RbacResourceVO> result = rbacService.roleBindings(user.getIdToken(), namespace);
+        ThrowUtils.throwIf(result == null, ErrorCode.OPERATION_ERROR, "获取 RoleBinding 列表失败");
+        return ResultUtils.success(result);
+    }
+
+    @GetMapping("/rolebindings/{namespace}/{name}")
+    @Operation(summary = "查询 RoleBinding 详情")
+    public BaseResponse<RbacResourceVO> getRoleBinding(@PathVariable String namespace, @PathVariable String name,
+                                                       HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        RbacResourceVO result = rbacService.roleBinding(user.getIdToken(), namespace, name);
+        ThrowUtils.throwIf(result == null, ErrorCode.NOT_FOUND_ERROR, "RoleBinding 不存在");
+        return ResultUtils.success(result);
+    }
 
     @PostMapping(value="/configmaps", produces = "application/json")
     @Operation(summary = "创建 ConfigMap，支持服务端试运行")

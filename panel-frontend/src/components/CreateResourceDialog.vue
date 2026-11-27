@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
+import { createRole } from '@/api/rbac'
 import {
   createDeployment,
   createConfigMap,
@@ -10,7 +11,7 @@ import {
   createService,
 } from '@/api/clusterController.ts'
 
-type ResourceType = 'Pod' | 'Deployment' | 'Service' | 'Namespace' | 'ConfigMap'
+type ResourceType = 'Pod' | 'Deployment' | 'Service' | 'Namespace' | 'ConfigMap' | 'Role'
 
 type CreatedMeta = { namespace?: string; name?: string } | undefined
 
@@ -62,6 +63,13 @@ const resourceConfigs: Record<
       }
     },
     detailPath: () => undefined,
+  },
+  Role: {
+    create: async (yaml, dryRun) => {
+      const response = await createRole(yaml, dryRun)
+      return { code: response.data.code, metadata: response.data.data?.metadata }
+    },
+    detailPath: (meta) => meta?.namespace ? `/roles?kind=roles&namespace=${encodeURIComponent(meta.namespace)}` : '/roles',
   },
 }
 
