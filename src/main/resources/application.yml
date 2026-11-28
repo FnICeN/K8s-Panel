@@ -50,8 +50,8 @@ audit:
   # SSE 增量轮询间隔（毫秒）
   poll-interval-ms: 3000
   report:
-    # 新增审计告警是否自动生成 PDF
-    enabled: true
+    # 仅控制新增告警的自动生成；预览或下载时仍会按需生成 PDF
+    enabled: false
     # 报告持久化目录；容器部署时应挂载持久卷
     storage-dir: data/audit-reports
     # 可选：中文 TTF/TTC/OTF 字体绝对路径，留空时探测常见系统字体
