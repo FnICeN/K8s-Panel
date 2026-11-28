@@ -2,6 +2,7 @@ package com.ficn.panel.service.audit;
 
 import com.ficn.panel.config.AuditReportProperties;
 import com.ficn.panel.model.entity.vo.AuditAlertVO;
+import com.ficn.panel.repository.AuditRepository;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,6 +12,7 @@ import org.thymeleaf.context.Context;
 import org.springframework.util.StringUtils;
 
 import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -91,6 +93,56 @@ public class AuditReportService {
             throw new IllegalStateException("审计报告尚未生成");
         }
         return path;
+    }
+
+    /** 点击预览或下载时即时渲染时间段报告，不写入单条报告目录。 */
+    public byte[] renderPeriodReport(Instant start, Instant end, AuditRepository.PeriodReportData data) {
+        Path font = resolveFontPath();
+        if (font == null) {
+            throw new IllegalStateException("未找到可用的中文字体，请配置 audit.report.font-path");
+        }
+        long total = data.priorities().stream().mapToLong(AuditRepository.PriorityCount::count).sum();
+        long red = data.redAlerts().size();
+        long orange = data.priorities().stream()
+                .filter(item -> "Warning".equals(item.priority()))
+                .mapToLong(AuditRepository.PriorityCount::count).sum();
+        Context context = new Context(java.util.Locale.SIMPLIFIED_CHINESE);
+        context.setVariable("fontFamily", FONT_FAMILY);
+        context.setVariable("startTime", TIME_FORMATTER.format(start));
+        context.setVariable("endTime", TIME_FORMATTER.format(end.minusNanos(1)));
+        context.setVariable("generatedAt", TIME_FORMATTER.format(Instant.now()));
+        context.setVariable("total", total);
+        context.setVariable("red", red);
+        context.setVariable("orange", orange);
+        context.setVariable("blue", total - red - orange);
+        context.setVariable("priorities", data.priorities());
+        context.setVariable("rules", data.rules());
+        context.setVariable("redAlerts", data.redAlerts().stream().map(alert -> new PeriodRedAlert(
+                alert.getUuid(),
+                alert.getTimeMs() != null && alert.getTimeMs() > 0
+                        ? TIME_FORMATTER.format(Instant.ofEpochMilli(alert.getTimeMs())) : value(alert.getTime()),
+                firstNonBlank(alert.getRuleCn(), alert.getRule()),
+                firstNonBlank(alert.getPriorityCn(), alert.getPriority()),
+                firstNonBlank(alert.getNamespace()),
+                firstNonBlank(alert.getSubjectName()),
+                firstNonBlank(alert.getProblemDesc(), alert.getOutput()),
+                value(alert.getOutput()))).toList());
+        try (ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            String html = templateEngine.process("audit-period-report", context);
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.useFastMode();
+            builder.useFont(font.toFile(), FONT_FAMILY);
+            builder.withHtmlContent(html, null);
+            builder.toStream(output);
+            builder.run();
+            return output.toByteArray();
+        } catch (Exception e) {
+            throw new IllegalStateException("生成时间段审计报告失败", e);
+        }
+    }
+
+    private record PeriodRedAlert(String uuid, String time, String rule, String priority,
+                                  String namespace, String subject, String description, String output) {
     }
 
     /**

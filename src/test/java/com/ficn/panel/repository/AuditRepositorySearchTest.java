@@ -101,6 +101,23 @@ class AuditRepositorySearchTest {
                 .containsEntry("offset", 20);
     }
 
+    @Test
+    void periodReportAggregatesAllAlertsAndFetchesOnlyRedDetails() {
+        client.periodRows = true;
+
+        AuditRepository.PeriodReportData data = repository.periodReportData(1000, 2000);
+
+        assertThat(data.priorities()).containsExactly(
+                new AuditRepository.PriorityCount("Critical", "严重", 1));
+        assertThat(data.rules()).containsExactly(
+                new AuditRepository.RuleCount("Create Pod", "创建容器", 3));
+        assertThat(data.redAlerts()).extracting(alert -> alert.getUuid())
+                .containsExactly("00000000-0000-0000-0000-000000000001");
+        assertThat(client.sql).contains("toString(priority) IN ('Emergency', 'Alert', 'Critical', 'Error')")
+                .contains("ORDER BY time DESC, uuid DESC");
+        assertThat(client.params).containsEntry("startMs", 1000L).containsEntry("endMs", 2000L);
+    }
+
     private static Map<String, Object> row(String uuid, String time) {
         return Map.of("uuid", uuid, "time_raw", time);
     }
@@ -110,6 +127,7 @@ class AuditRepositorySearchTest {
         private String sql;
         private String countSql;
         private Map<String, Object> params;
+        private boolean periodRows;
         private long count;
         private long redCount;
         private long orangeCount;
@@ -123,6 +141,17 @@ class AuditRepositorySearchTest {
         public List<Map<String, Object>> query(String sql, Map<String, Object> params) {
             queryCount++;
             this.params = params;
+            if (periodRows) {
+                this.sql = sql;
+                if (sql.startsWith("SELECT toString(priority)")) {
+                    return List.of(Map.of("priority", "Critical", "priority_cn", "严重", "cnt", 1));
+                }
+                if (sql.startsWith("SELECT rule, rule_cn")) {
+                    return List.of(Map.of("rule", "Create Pod", "rule_cn", "创建容器", "cnt", 3));
+                }
+                return List.of(row("00000000-0000-0000-0000-000000000001",
+                        "2026-11-28 10:00:00.123456789"));
+            }
             if (sql.startsWith("SELECT count() AS cnt")) {
                 this.countSql = sql;
                 return List.of(Map.of("cnt", count, "red_count", redCount,

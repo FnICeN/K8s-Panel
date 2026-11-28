@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>审计告警时间段报告</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 18mm 15mm;
+            @bottom-center {
+                content: "第 " counter(page) " 页 / 共 " counter(pages) " 页";
+                font-family: 'AuditReportChinese';
+                font-size: 9px;
+                color: #64748b;
+            }
+        }
+        body { margin: 0; color: #1e293b; font-family: 'AuditReportChinese'; font-size: 10px; line-height: 1.6; }
+        h1, h2, h3, p { margin: 0; }
+        .header { padding: 18px 20px; color: white; background: #163a5f; border-bottom: 5px solid #2563eb; }
+        .header h1 { font-size: 23px; }
+        .header p { margin-top: 5px; color: #dbeafe; }
+        .meta, .summary, .detail { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        .meta td, .summary td, .detail th, .detail td { border: 1px solid #cbd5e1; padding: 6px 8px; vertical-align: top; word-wrap: break-word; }
+        .summary td { width: 25%; text-align: center; }
+        .summary strong { display: block; font-size: 20px; color: #163a5f; }
+        .detail th { text-align: left; background: #f1f5f9; }
+        .section { margin-top: 17px; }
+        .section h2 { padding: 5px 9px; color: #163a5f; font-size: 14px; background: #eff6ff; border-left: 4px solid #2563eb; }
+        .alert { margin-top: 12px; padding: 9px 11px; border: 1px solid #fca5a5; border-left: 4px solid #dc2626; page-break-inside: avoid; }
+        .alert h3 { font-size: 11px; color: #991b1b; }
+        .alert p { margin-top: 4px; white-space: pre-wrap; }
+        .muted { color: #64748b; }
+        .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #cbd5e1; color: #64748b; font-size: 9px; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>审计告警时间段报告</h1>
+    <p>Kubernetes 安全审计 · 按需生成</p>
+</div>
+<table class="meta">
+    <tr><td>开始时间：<span th:text="${startTime}">开始</span></td><td>结束时间：<span th:text="${endTime}">结束</span></td></tr>
+    <tr><td>生成时间：<span th:text="${generatedAt}">生成时间</span></td><td>数据来源：Falco / Kubernetes Audit</td></tr>
+</table>
+<div class="section">
+    <h2>一、告警概览</h2>
+    <table class="summary"><tr>
+        <td>告警总数<strong th:text="${total}">0</strong></td>
+        <td>红色告警<strong th:text="${red}">0</strong></td>
+        <td>橙色告警<strong th:text="${orange}">0</strong></td>
+        <td>蓝色告警<strong th:text="${blue}">0</strong></td>
+    </tr></table>
+</div>
+<div class="section">
+    <h2>二、严重程度统计</h2>
+    <table class="detail"><thead><tr><th>级别</th><th>原始级别</th><th>条数</th></tr></thead><tbody>
+        <tr th:each="item : ${priorities}"><td th:text="${item.priorityCn}">严重</td><td th:text="${item.priority}">Critical</td><td th:text="${item.count}">0</td></tr>
+        <tr th:if="${#lists.isEmpty(priorities)}"><td colspan="3">此时间段无审计告警</td></tr>
+    </tbody></table>
+</div>
+<div class="section">
+    <h2>三、告警类型统计</h2>
+    <table class="detail"><thead><tr><th>告警规则</th><th>原始规则</th><th>条数</th></tr></thead><tbody>
+        <tr th:each="item : ${rules}"><td th:text="${item.ruleCn}">规则</td><td th:text="${item.rule}">Rule</td><td th:text="${item.count}">0</td></tr>
+        <tr th:if="${#lists.isEmpty(rules)}"><td colspan="3">此时间段无审计告警</td></tr>
+    </tbody></table>
+</div>
+<div class="section">
+    <h2>四、红色告警详情</h2>
+    <p class="muted">包含 Emergency、Alert、Critical、Error 级别，按发生时间倒序。</p>
+    <p th:if="${#lists.isEmpty(redAlerts)}">此时间段无红色告警。</p>
+    <div class="alert" th:each="item : ${redAlerts}">
+        <h3><span th:text="${item.rule}">规则</span> · <span th:text="${item.priority}">级别</span></h3>
+        <p>时间：<span th:text="${item.time}">时间</span>　命名空间：<span th:text="${item.namespace}">命名空间</span></p>
+        <p>操作主体：<span th:text="${item.subject}">用户</span>　事件编号：<span th:text="${item.uuid}">UUID</span></p>
+        <p>问题说明：<span th:text="${item.description}">说明</span></p>
+        <p>原始描述：<span th:text="${item.output}">描述</span></p>
+    </div>
+</div>
+<p class="footer">本报告根据所选时间范围内的审计告警即时生成。告警统计和红色告警明细均来自 ClickHouse。</p>
+</body>
+</html>

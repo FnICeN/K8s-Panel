@@ -103,6 +103,27 @@ public class AuditController {
         }
     }
 
+    @GetMapping(value = "/reports/period", produces = MediaType.APPLICATION_PDF_VALUE)
+    @Operation(summary = "按所选时间范围即时生成审计汇总 PDF")
+    public ResponseEntity<byte[]> periodReport(
+            @RequestParam("start") String start,
+            @RequestParam("end") String end,
+            HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        Instant startTime = parseInstant(start);
+        Instant endTime = parseInstant(end);
+        ThrowUtils.throwIf(!startTime.isBefore(endTime), ErrorCode.PARAMS_ERROR, "开始时间必须早于结束时间");
+        byte[] pdf = auditReportService.renderPeriodReport(startTime, endTime,
+                auditRepository.periodReportData(startTime.toEpochMilli(), endTime.toEpochMilli()));
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.inline()
+                .filename("audit-period-report.pdf", StandardCharsets.UTF_8).build());
+        headers.setCacheControl("private, no-store");
+        return ResponseEntity.ok().headers(headers).body(pdf);
+    }
+
     @GetMapping(value = "/alerts/count", produces = "application/json")
     @Operation(summary = "近24h审计告警总数（铃铛角标）")
     public BaseResponse<Long> countAlerts(HttpServletRequest request) {

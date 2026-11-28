@@ -2,6 +2,7 @@ package com.ficn.panel.service.audit;
 
 import com.ficn.panel.config.AuditReportProperties;
 import com.ficn.panel.model.entity.vo.AuditAlertVO;
+import com.ficn.panel.repository.AuditRepository;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Assumptions;
@@ -66,6 +67,28 @@ class AuditReportServiceTest {
                     .contains("创建高权限容器")
                     .contains("system:serviceaccount:default:operator")
                     .contains("立即核验操作主体");
+        }
+    }
+
+    @Test
+    void rendersPeriodSummaryAndAllRedAlertDetails() throws Exception {
+        Assumptions.assumeTrue(testFont != null, "测试环境缺少中文字体");
+        AuditAlertVO redAlert = sampleAlert();
+        AuditRepository.PeriodReportData data = new AuditRepository.PeriodReportData(
+                List.of(new AuditRepository.PriorityCount("Critical", "严重", 1),
+                        new AuditRepository.PriorityCount("Warning", "警告", 2)),
+                List.of(new AuditRepository.RuleCount("Create Privileged Pod", "创建高权限容器", 1),
+                        new AuditRepository.RuleCount("Read Secret", "读取密钥", 2)),
+                List.of(redAlert));
+
+        byte[] pdf = reportService.renderPeriodReport(
+                Instant.parse("2026-10-05T00:00:00Z"), Instant.parse("2026-10-06T00:00:00Z"), data);
+
+        assertThat(pdf.length).isGreaterThan(1_000);
+        try (PDDocument document = PDDocument.load(pdf)) {
+            String text = new PDFTextStripper().getText(document);
+            assertThat(text).contains("审计告警时间段报告", "告警总数", "红色告警详情",
+                    "创建高权限容器", "读取密钥", redAlert.getUuid(), "system:serviceaccount:default:operator");
         }
     }
 

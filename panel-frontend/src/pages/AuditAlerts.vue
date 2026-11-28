@@ -5,6 +5,7 @@ import {
   deleteAuditReport,
   searchAuditAlerts,
   getAuditReport,
+  getAuditPeriodReport,
   getAuditReports,
   type AuditAlert,
   type AuditReportListItem,
@@ -22,6 +23,7 @@ import {
 const auditStore = useAuditStore()
 const alerts = ref<AuditAlert[]>([])
 const loading = ref(false)
+const periodReportLoading = ref(false)
 const timeRange = ref<string[] | undefined>()
 const alertPageSize = 10
 const currentPage = ref(1)
@@ -270,6 +272,45 @@ async function openReport(record: { uuid: string }, download: boolean) {
   }
 }
 
+async function openPeriodReport(download: boolean) {
+  if (timeRange.value?.length !== 2) {
+    message.warning('请先选择时间范围')
+    return
+  }
+  const window = createWindow()
+  if (!window) return
+  const previewWindow = download ? null : globalThis.window.open('about:blank', '_blank')
+  periodReportLoading.value = true
+  try {
+    const response = await getAuditPeriodReport(window.start, window.end)
+    const blob = response.data
+    if (blob.type.includes('application/json')) {
+      const payload = JSON.parse(await blob.text()) as { msg?: string }
+      throw new Error(payload.msg || '报告生成失败')
+    }
+    if (!blob.size) throw new Error('报告内容为空')
+    const objectUrl = URL.createObjectURL(blob)
+    if (download) {
+      const link = document.createElement('a')
+      link.href = objectUrl
+      link.download = `audit-period-report-${window.start.slice(0, 10)}-${window.end.slice(0, 10)}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } else if (previewWindow) {
+      previewWindow.location.href = objectUrl
+    } else {
+      message.warning('浏览器阻止了报告预览窗口，请允许弹出窗口后重试')
+    }
+    globalThis.window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+  } catch (error) {
+    previewWindow?.close()
+    message.error(error instanceof Error ? error.message : '生成时间段报告失败')
+  } finally {
+    periodReportLoading.value = false
+  }
+}
+
 onMounted(() => {
   searchAlerts()
   auditStore.init()
@@ -323,6 +364,8 @@ onMounted(() => {
             class="time-range-picker"
           />
           <span class="range-hint">不选时间时查询近 24 小时</span>
+          <a-button :disabled="timeRange?.length !== 2 || periodReportLoading" :loading="periodReportLoading" @click="openPeriodReport(false)">预览时间段报告</a-button>
+          <a-button :disabled="timeRange?.length !== 2 || periodReportLoading" @click="openPeriodReport(true)">下载时间段报告</a-button>
         </div>
         <div class="filter-bar">
       <a-input

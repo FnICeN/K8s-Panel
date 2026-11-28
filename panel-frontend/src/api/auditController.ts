@@ -144,6 +144,16 @@ export async function getAuditReport(uuid: string, options?: RequestOptions) {
   })
 }
 
+/** 按所选时间范围即时生成审计汇总 PDF */
+export async function getAuditPeriodReport(start: string, end: string, options?: RequestOptions) {
+  return request<Blob>('/audit/reports/period', {
+    method: 'GET',
+    params: { start, end },
+    responseType: 'blob',
+    ...(options || {}),
+  })
+}
+
 /** 分页查询已生成的历史审计报告 GET /audit/reports */
 export async function getAuditReports(
   params?: { limit?: number; offset?: number },

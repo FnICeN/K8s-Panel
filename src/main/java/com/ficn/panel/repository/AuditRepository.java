@@ -130,6 +130,41 @@ public class AuditRepository {
         return new AuditAlertPageVO(total, red, orange, blue, items);
     }
 
+    /** 时间段报告：在数据库端统计全部记录，只取红色告警的明细。 */
+    public PeriodReportData periodReportData(long startMs, long endMs) {
+        String where = " FROM " + TABLE + " WHERE source = 'k8s_audit'"
+                + " AND time >= fromUnixTimestamp64Milli({startMs:Int64})"
+                + " AND time < fromUnixTimestamp64Milli({endMs:Int64})";
+        Map<String, Object> params = Map.of("startMs", startMs, "endMs", endMs);
+        List<PriorityCount> priorities = clickHouseClient.query(
+                "SELECT toString(priority) AS priority, priority_cn, count() AS cnt"
+                        + where + " GROUP BY priority, priority_cn ORDER BY cnt DESC", params)
+                .stream().map(row -> new PriorityCount(
+                        asString(row.get("priority")), asString(row.get("priority_cn")),
+                        toLong(row.get("cnt")))).toList();
+        List<RuleCount> rules = clickHouseClient.query(
+                "SELECT rule, rule_cn, count() AS cnt"
+                        + where + " GROUP BY rule, rule_cn ORDER BY cnt DESC, rule ASC", params)
+                .stream().map(row -> new RuleCount(
+                        asString(row.get("rule")), asString(row.get("rule_cn")),
+                        toLong(row.get("cnt")))).toList();
+        List<AuditAlertVO> redAlerts = mapRows(clickHouseClient.query(
+                "SELECT " + COLUMNS + where
+                        + " AND toString(priority) IN ('Emergency', 'Alert', 'Critical', 'Error')"
+                        + " ORDER BY time DESC, uuid DESC", params));
+        return new PeriodReportData(priorities, rules, redAlerts);
+    }
+
+    public record PriorityCount(String priority, String priorityCn, long count) {
+    }
+
+    public record RuleCount(String rule, String ruleCn, long count) {
+    }
+
+    public record PeriodReportData(List<PriorityCount> priorities, List<RuleCount> rules,
+                                   List<AuditAlertVO> redAlerts) {
+    }
+
     /**
      * 按 uuid 查询单条详情。
      */
