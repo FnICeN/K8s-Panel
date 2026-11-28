@@ -6,6 +6,7 @@ import com.ficn.panel.exception.ErrorCode;
 import com.ficn.panel.exception.ThrowUtils;
 import com.ficn.panel.model.entity.User;
 import com.ficn.panel.model.entity.vo.AuditAlertVO;
+import com.ficn.panel.model.entity.vo.AuditAlertPageVO;
 import com.ficn.panel.model.entity.vo.AuditReportListItemVO;
 import com.ficn.panel.model.entity.vo.AuditReportPageVO;
 import com.ficn.panel.model.entity.vo.AuditReportStatusVO;
@@ -33,6 +34,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.Duration;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,6 +68,39 @@ public class AuditController {
         ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
         List<AuditAlertVO> alerts = auditRepository.listAlerts(rule, namespace, priority, limit, offset);
         return ResultUtils.success(alerts);
+    }
+
+    @GetMapping(value = "/alerts/search", produces = "application/json")
+    @Operation(summary = "按时间范围分页查询审计告警，可选择是否统计总数（默认近24小时）")
+    public BaseResponse<AuditAlertPageVO> searchAlerts(
+            @RequestParam(value = "rule", required = false) String rule,
+            @RequestParam(value = "namespace", required = false) String namespace,
+            @RequestParam(value = "priority", required = false) String priority,
+            @RequestParam(value = "start", required = false) String start,
+            @RequestParam(value = "end", required = false) String end,
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @RequestParam(value = "offset", defaultValue = "0") int offset,
+            @RequestParam(value = "includeSummary", defaultValue = "true") boolean includeSummary,
+            HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        ThrowUtils.throwIf(limit < 1 || limit > 200, ErrorCode.PARAMS_ERROR, "每页条数必须在 1 到 200 之间");
+        ThrowUtils.throwIf(offset < 0, ErrorCode.PARAMS_ERROR, "分页偏移量不能为负数");
+        ThrowUtils.throwIf((start == null) != (end == null), ErrorCode.PARAMS_ERROR, "开始和结束时间必须同时提供");
+
+        Instant endTime = end == null ? Instant.now() : parseInstant(end);
+        Instant startTime = start == null ? endTime.minus(Duration.ofHours(24)) : parseInstant(start);
+        ThrowUtils.throwIf(!startTime.isBefore(endTime), ErrorCode.PARAMS_ERROR, "开始时间必须早于结束时间");
+        return ResultUtils.success(auditRepository.searchAlerts(rule, namespace, priority,
+                startTime.toEpochMilli(), endTime.toEpochMilli(), limit, offset, includeSummary));
+    }
+
+    private static Instant parseInstant(String value) {
+        try {
+            return Instant.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new com.ficn.panel.exception.BusinessException(ErrorCode.PARAMS_ERROR, "时间必须是 ISO-8601 UTC 格式");
+        }
     }
 
     @GetMapping(value = "/alerts/count", produces = "application/json")

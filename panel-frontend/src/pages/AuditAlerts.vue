@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { message } from 'ant-design-vue'
 import {
   deleteAuditReport,
-  getAuditAlerts,
+  searchAuditAlerts,
   getAuditReport,
   getAuditReports,
   type AuditAlert,
@@ -22,6 +22,21 @@ import {
 const auditStore = useAuditStore()
 const alerts = ref<AuditAlert[]>([])
 const loading = ref(false)
+const timeRange = ref<string[] | undefined>()
+const alertPageSize = 10
+const currentPage = ref(1)
+const alertTotal = ref(0)
+const redAlertCount = ref(0)
+const orangeAlertCount = ref(0)
+const blueAlertCount = ref(0)
+let activeSearch: {
+  start: string
+  end: string
+  rule?: string
+  namespace?: string
+  priority?: string
+} | null = null
+let searchVersion = 0
 const reportLoading = ref<Record<string, boolean>>({})
 const activeTab = ref('alerts')
 const historyReports = ref<AuditReportListItem[]>([])
@@ -39,41 +54,83 @@ const filters = ref<{ rule: string; namespace: string; priority: string | undefi
 
 const priorityOptions = ['Critical', 'Error', 'Warning', 'Notice', 'Informational']
 
-const hasFilter = computed(
-  () => !!(filters.value.rule || filters.value.namespace || filters.value.priority),
-)
-
-const redAlertCount = computed(
-  () => alerts.value.filter((a) => getPriorityColor(a.priority) === 'red').length,
-)
-const orangeAlertCount = computed(
-  () => alerts.value.filter((a) => getPriorityColor(a.priority) === 'orange').length,
-)
-const blueAlertCount = computed(
-  () => alerts.value.filter((a) => getPriorityColor(a.priority) === 'blue').length,
-)
 const latestAlert = computed(() => alerts.value[0])
 
-async function loadAlerts() {
+function createWindow() {
+  if (timeRange.value?.length === 2) {
+    const start = new Date(timeRange.value[0]!)
+    // 选择器精确到秒，结束秒内的事件也应包含在结果中。
+    const end = new Date(new Date(timeRange.value[1]!).getTime() + 1000)
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start >= end) {
+      message.error('请选择有效的时间范围')
+      return null
+    }
+    return { start: start.toISOString(), end: end.toISOString() }
+  }
+  const end = new Date()
+  return { start: new Date(end.getTime() - 24 * 60 * 60 * 1000).toISOString(), end: end.toISOString() }
+}
+
+async function loadAlerts(page: number, includeSummary: boolean) {
+  if (!activeSearch) return false
+  const version = ++searchVersion
   loading.value = true
   try {
-    const resp = await getAuditAlerts({
-      rule: filters.value.rule || undefined,
-      namespace: filters.value.namespace || undefined,
-      priority: filters.value.priority || undefined,
-      limit: 200,
+    const resp = await searchAuditAlerts({
+      ...activeSearch,
+      limit: alertPageSize,
+      offset: (page - 1) * alertPageSize,
+      includeSummary,
     })
-    if (resp.data.code === 0 && Array.isArray(resp.data.data)) {
-      alerts.value = resp.data.data
+    if (version === searchVersion && resp.data.code === 0) {
+      alerts.value = resp.data.data.items || []
+      if (resp.data.data.total != null) alertTotal.value = resp.data.data.total
+      if (resp.data.data.redCount != null) redAlertCount.value = resp.data.data.redCount
+      if (resp.data.data.orangeCount != null) orangeAlertCount.value = resp.data.data.orangeCount
+      if (resp.data.data.blueCount != null) blueAlertCount.value = resp.data.data.blueCount
+      currentPage.value = page
+      return true
     }
+    return false
+  } catch {
+    if (version === searchVersion) message.error('查询审计告警失败')
+    return false
   } finally {
-    loading.value = false
+    if (version === searchVersion) loading.value = false
   }
+}
+
+function searchAlerts() {
+  const window = createWindow()
+  if (!window) return
+  activeSearch = {
+    ...window,
+    rule: filters.value.rule || undefined,
+    namespace: filters.value.namespace || undefined,
+    priority: filters.value.priority || undefined,
+  }
+  currentPage.value = 1
+  alertTotal.value = 0
+  redAlertCount.value = 0
+  orangeAlertCount.value = 0
+  blueAlertCount.value = 0
+  alerts.value = []
+  loadAlerts(1, true)
+}
+
+async function changeAlertPage(page: number) {
+  if (loading.value || page === currentPage.value) return
+  await loadAlerts(page, false)
+}
+
+function showAlertTotal(total: number) {
+  return `共 ${total} 条告警`
 }
 
 function resetFilters() {
   filters.value = { rule: '', namespace: '', priority: undefined }
-  loadAlerts()
+  timeRange.value = undefined
+  searchAlerts()
 }
 
 function priorityText(record: AuditAlert) {
@@ -213,22 +270,8 @@ async function openReport(record: { uuid: string }, download: boolean) {
   }
 }
 
-// 实时：把 store 收到的新告警合并进当前列表（有筛选时不打扰）
-watch(
-  () => auditStore.alerts,
-  (incoming) => {
-    if (hasFilter.value) return
-    const existing = new Set(alerts.value.map((a) => a.uuid))
-    const fresh = incoming.filter((a) => !existing.has(a.uuid))
-    if (fresh.length) {
-      alerts.value = [...fresh, ...alerts.value]
-    }
-  },
-  { deep: true },
-)
-
 onMounted(() => {
-  loadAlerts()
+  searchAlerts()
   auditStore.init()
   auditStore.connect()
 })
@@ -243,7 +286,7 @@ onMounted(() => {
         <p>数据源：ClickHouse falco.events（source = k8s_audit）</p>
       </div>
       <div class="latest-alert" v-if="latestAlert">
-        <span>最新告警</span>
+        <span>本页最新告警</span>
         <strong>{{ latestAlert.ruleCn || latestAlert.rule }}</strong>
         <small>{{ formatTime(latestAlert) }}</small>
       </div>
@@ -251,8 +294,8 @@ onMounted(() => {
 
     <div class="severity-grid">
       <div class="severity-card severity-total">
-        <span>当前展示</span>
-        <strong>{{ alerts.length }}</strong>
+        <span>范围内告警</span>
+        <strong>{{ alertTotal }}</strong>
       </div>
       <div class="severity-card severity-red">
         <span>红色告警</span>
@@ -269,21 +312,32 @@ onMounted(() => {
     </div>
 
     <a-tabs v-model:active-key="activeTab" class="audit-tabs" @change="handleTabChange">
-      <a-tab-pane key="alerts" tab="实时告警">
+      <a-tab-pane key="alerts" tab="告警查询">
+        <div class="time-filter-row">
+          <a-range-picker
+            v-model:value="timeRange"
+            :show-time="{ format: 'HH:mm:ss' }"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DDTHH:mm:ssZ"
+            :placeholder="['开始时间', '结束时间']"
+            class="time-range-picker"
+          />
+          <span class="range-hint">不选时间时查询近 24 小时</span>
+        </div>
         <div class="filter-bar">
       <a-input
         v-model:value="filters.rule"
         placeholder="按规则名筛选"
         allow-clear
         style="width: 220px"
-        @press-enter="loadAlerts"
+        @press-enter="searchAlerts"
       />
       <a-input
         v-model:value="filters.namespace"
         placeholder="按命名空间筛选"
         allow-clear
         style="width: 180px"
-        @press-enter="loadAlerts"
+        @press-enter="searchAlerts"
       />
       <a-select
         v-model:value="filters.priority"
@@ -292,7 +346,7 @@ onMounted(() => {
         style="width: 160px"
         :options="priorityOptions.map((p) => ({ label: p, value: p }))"
       />
-      <a-button type="primary" :loading="loading" @click="loadAlerts">查询</a-button>
+      <a-button type="primary" :loading="loading" @click="searchAlerts">查询</a-button>
       <a-button @click="resetFilters">重置</a-button>
         </div>
 
@@ -301,7 +355,7 @@ onMounted(() => {
       :data-source="alerts"
       :loading="loading"
       row-key="uuid"
-      :pagination="{ pageSize: 10 }"
+      :pagination="false"
       :row-class-name="getAlertRowClassName"
           :scroll="{ x: 1180 }"
     >
@@ -387,6 +441,17 @@ onMounted(() => {
         </div>
       </template>
         </a-table>
+        <div class="alert-pagination">
+          <a-pagination
+            :current="currentPage"
+            :page-size="alertPageSize"
+            :total="alertTotal"
+            :show-size-changer="false"
+            :show-total="showAlertTotal"
+            :disabled="loading"
+            @change="changeAlertPage"
+          />
+        </div>
       </a-tab-pane>
 
       <a-tab-pane key="reports" tab="历史报告">
@@ -605,6 +670,34 @@ onMounted(() => {
   gap: 12px;
   margin-bottom: 16px;
 }
+
+.time-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.time-range-picker {
+  width: 380px;
+  max-width: 100%;
+}
+
+.range-hint {
+  align-self: center;
+  color: var(--app-text-muted);
+  font-size: 12px;
+}
+
+.alert-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
 
 .report-toolbar {
   display: flex;

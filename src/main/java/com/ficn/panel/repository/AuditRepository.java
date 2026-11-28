@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ficn.panel.client.clickhouse.ClickHouseClient;
 import com.ficn.panel.model.entity.vo.AuditAlertVO;
+import com.ficn.panel.model.entity.vo.AuditAlertPageVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
@@ -77,6 +78,56 @@ public class AuditRepository {
         params.put("offset", Math.max(0, offset));
 
         return mapRows(clickHouseClient.query(sql.toString(), params));
+    }
+
+    /** 首次查询统计整个时间范围；跳页时只读取当前页。 */
+    public AuditAlertPageVO searchAlerts(String rule, String namespace, String priority,
+                                         long startMs, long endMs, int limit, int offset,
+                                         boolean includeSummary) {
+        StringBuilder where = new StringBuilder(" FROM ").append(TABLE)
+                .append(" WHERE source = 'k8s_audit'")
+                .append(" AND time >= fromUnixTimestamp64Milli({startMs:Int64})")
+                .append(" AND time < fromUnixTimestamp64Milli({endMs:Int64})");
+        Map<String, Object> params = new HashMap<>();
+        params.put("startMs", startMs);
+        params.put("endMs", endMs);
+        if (StringUtils.hasText(rule)) {
+            where.append(" AND rule = {rule:String}");
+            params.put("rule", rule);
+        }
+        if (StringUtils.hasText(namespace)) {
+            where.append(" AND namespace = {namespace:String}");
+            params.put("namespace", namespace);
+        }
+        if (StringUtils.hasText(priority)) {
+            where.append(" AND toString(priority) = {priority:String}");
+            params.put("priority", priority);
+        }
+        Long total = null;
+        Long red = null;
+        Long orange = null;
+        Long blue = null;
+        if (includeSummary) {
+            List<Map<String, Object>> counts = clickHouseClient.query(
+                    "SELECT count() AS cnt,"
+                            + " countIf(toString(priority) IN ('Emergency', 'Alert', 'Critical', 'Error')) AS red_count,"
+                            + " countIf(toString(priority) = 'Warning') AS orange_count"
+                            + where, params);
+            Map<String, Object> countRow = counts.isEmpty() ? Map.of() : counts.get(0);
+            total = toLong(countRow.get("cnt"));
+            red = toLong(countRow.get("red_count"));
+            orange = toLong(countRow.get("orange_count"));
+            blue = total - red - orange;
+            if (offset >= total) {
+                return new AuditAlertPageVO(total, red, orange, blue, List.of());
+            }
+        }
+        params.put("limit", limit);
+        params.put("offset", offset);
+        List<AuditAlertVO> items = mapRows(clickHouseClient.query(
+                "SELECT " + COLUMNS + where
+                        + " ORDER BY time DESC, uuid DESC LIMIT {limit:UInt32} OFFSET {offset:UInt32}", params));
+        return new AuditAlertPageVO(total, red, orange, blue, items);
     }
 
     /**

@@ -38,6 +38,25 @@ export interface AuditAlertListParams {
   offset?: number
 }
 
+export interface AuditAlertSearchParams {
+  rule?: string
+  namespace?: string
+  priority?: string
+  start: string
+  end: string
+  limit?: number
+  offset?: number
+  includeSummary?: boolean
+}
+
+export interface AuditAlertPage {
+  total: number | null
+  redCount: number | null
+  orangeCount: number | null
+  blueCount: number | null
+  items: AuditAlert[]
+}
+
 export interface AuditReportStatus {
   uuid: string
   available: boolean
@@ -79,6 +98,15 @@ export async function getAuditAlerts(
   return request<BaseResponse<AuditAlert[]>>('/audit/alerts', {
     method: 'GET',
     params: { ...(params || {}) },
+    ...(options || {}),
+  })
+}
+
+/** 首次查询统计总数；跳页可用 includeSummary=false 只读取当前页 */
+export async function searchAuditAlerts(params: AuditAlertSearchParams, options?: RequestOptions) {
+  return request<BaseResponse<AuditAlertPage>>('/audit/alerts/search', {
+    method: 'GET',
+    params,
     ...(options || {}),
   })
 }
