@@ -1,15 +1,45 @@
 package com.ficn.panel.service.cluster;
 
 import com.ficn.panel.client.k8s.GatekeeperApi;
+import com.ficn.panel.exception.BusinessException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 class GatekeeperServiceTest {
+    @Test
+    void deletesExistingConstraintWithoutTouchingTemplate() {
+        GatekeeperApi api = mock(GatekeeperApi.class);
+        GatekeeperService service = new GatekeeperService(api);
+        when(api.constraintGroup("token")).thenReturn(Map.of("preferredVersion", Map.of("version", "v1beta1")));
+        when(api.constraintResources("token", "v1beta1")).thenReturn(Map.of("resources", List.of(
+                Map.of("name", "k8sallowedimageregistries", "kind", "K8sAllowedImageRegistries", "namespaced", false))));
+        when(api.constraint("token", "v1beta1", "k8sallowedimageregistries", "registry-source-p1-4-v2"))
+                .thenReturn(Map.of("metadata", Map.of("name", "registry-source-p1-4-v2")));
+
+        service.deleteConstraint("token", "k8sallowedimageregistries", "registry-source-p1-4-v2");
+
+        verify(api).deleteConstraint("token", "v1beta1", "k8sallowedimageregistries", "registry-source-p1-4-v2");
+        verify(api, never()).templates("token");
+    }
+
+    @Test
+    void rejectsUnknownConstraintTypeBeforeDelete() {
+        GatekeeperApi api = mock(GatekeeperApi.class);
+        GatekeeperService service = new GatekeeperService(api);
+        when(api.constraintGroup("token")).thenReturn(Map.of("preferredVersion", Map.of("version", "v1beta1")));
+        when(api.constraintResources("token", "v1beta1")).thenReturn(Map.of("resources", List.of()));
+
+        assertThatThrownBy(() -> service.deleteConstraint("token", "constrainttemplates", "template"))
+                .isInstanceOf(BusinessException.class);
+        verify(api, never()).deleteConstraint(anyString(), anyString(), anyString(), anyString());
+    }
+
     @Test
     void listsTemplatesAndEveryDiscoveredConstraintKind() {
         GatekeeperApi api = mock(GatekeeperApi.class);

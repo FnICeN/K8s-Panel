@@ -10,6 +10,17 @@ import static org.mockito.Mockito.verify;
 
 class GatekeeperApiTest {
     @Test
+    void deletesOnlyTheNamedConstraintInstance() {
+        K8sHttpClient http = mock(K8sHttpClient.class);
+        GatekeeperApi api = new GatekeeperApi(http);
+
+        api.deleteConstraint("token", "v1beta1", "k8sallowedimageregistries", "registry-source-p1-4-v2");
+
+        verify(http).delete("token",
+                "/apis/constraints.gatekeeper.sh/v1beta1/k8sallowedimageregistries/registry-source-p1-4-v2");
+    }
+
+    @Test
     void annotationUsesMergePatchAndServerDryRun() {
         K8sHttpClient http = mock(K8sHttpClient.class);
         GatekeeperApi api = new GatekeeperApi(http);

@@ -37,3 +37,9 @@ export function previewGatekeeperAnnotation(resource: string, name: string, key:
     { key, value },
   )
 }
+
+export function deleteGatekeeperConstraint(resource: string, name: string) {
+  return request.delete<ApiResponse<boolean>>(
+    `/cluster/gatekeeper/constraints/${encodeURIComponent(resource)}/${encodeURIComponent(name)}`,
+  )
+}

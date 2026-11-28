@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import {
-  listGatekeeperPolicies, previewGatekeeperAnnotation,
+  deleteGatekeeperConstraint, listGatekeeperPolicies, previewGatekeeperAnnotation,
   type GatekeeperConstraint, type GatekeeperObject,
 } from '@/api/gatekeeper'
 
@@ -19,6 +19,7 @@ const previewing = ref(false)
 const annotationKey = ref('loa-test')
 const annotationValue = ref('true')
 const previewYaml = ref('')
+const deletingKey = ref('')
 
 const visibleTemplates = computed(() => templates.value.filter(item =>
   `${item.metadata?.name || ''} ${item.spec?.crd?.spec?.names?.kind || ''}`
@@ -83,6 +84,37 @@ async function runPreview() {
   }
 }
 
+function confirmDelete(record: GatekeeperConstraint) {
+  const name = record.object.metadata?.name
+  if (!name) return
+  const resource = record.resource
+  const key = `${resource}/${name}`
+  Modal.confirm({
+    title: '下线 Gatekeeper 约束策略',
+    content: `确认删除 ${key} 吗？这将停止该约束实例的策略执行，不会删除策略模板或同类型的其他约束。`,
+    okText: '确认下线',
+    okType: 'danger',
+    cancelText: '取消',
+    async onOk() {
+      deletingKey.value = key
+      try {
+        const response = await deleteGatekeeperConstraint(resource, name)
+        if (response.data.code !== 0) throw new Error(response.data.msg || '下线失败')
+        constraints.value = constraints.value.filter(item =>
+          !(item.resource === resource && item.object.metadata?.name === name),
+        )
+        message.success(`${key} 已下线`)
+        await loadPolicies()
+      } catch (cause) {
+        message.error(cause instanceof Error ? cause.message : '下线失败')
+        throw cause
+      } finally {
+        deletingKey.value = ''
+      }
+    },
+  })
+}
+
 onMounted(loadPolicies)
 </script>
 
@@ -106,7 +138,14 @@ onMounted(loadPolicies)
           <a-table-column title="约束类型" key="kind"><template #default="{ record }">{{ record.object.kind || record.resource }}</template></a-table-column>
           <a-table-column title="执行方式" key="action"><template #default="{ record }">{{ record.object.spec?.enforcementAction || 'deny（默认）' }}</template></a-table-column>
           <a-table-column title="违规数" key="violations"><template #default="{ record }">{{ record.object.status?.totalViolations ?? '-' }}</template></a-table-column>
-          <a-table-column title="操作" key="actions"><template #default="{ record }"><a @click="openPreview(record)">编辑注解</a></template></a-table-column>
+          <a-table-column title="操作" key="actions">
+            <template #default="{ record }">
+              <a-space>
+                <a @click="openPreview(record)">编辑注解</a>
+                <a :aria-disabled="!!deletingKey" class="delete-action" @click="!deletingKey && confirmDelete(record)">下线</a>
+              </a-space>
+            </template>
+          </a-table-column>
         </a-table>
       </a-tab-pane>
       <a-tab-pane key="templates" :tab="`策略模板 (${templates.length})`">
@@ -154,5 +193,6 @@ onMounted(loadPolicies)
 .annotation-fields :deep(.ant-input) { min-width: 0; }
 .result-alert { margin: 16px 0; }
 .yaml-result { max-height: 420px; overflow: auto; padding: 12px; background: #f5f5f5; white-space: pre; }
+.delete-action { color: #cf1322; }
 @media (max-width: 700px) { .gatekeeper-manager { padding: 0; } .annotation-fields { flex-wrap: wrap; } }
 </style>

@@ -46,6 +46,15 @@ public class GatekeeperApi {
     }
 
     @SuppressWarnings("unchecked")
+    public Map<String, Object> constraint(String token, String version, String resource, String name) {
+        return http.get(token, K8sApiPaths.gatekeeperConstraint(version, resource, name), Map.class);
+    }
+
+    public void deleteConstraint(String token, String version, String resource, String name) {
+        http.delete(token, K8sApiPaths.gatekeeperConstraint(version, resource, name));
+    }
+
+    @SuppressWarnings("unchecked")
     public Map<String, Object> patchAnnotation(String token, String version, String resource,
                                                 String name, String key, String value) {
         return http.patchMerge(token,

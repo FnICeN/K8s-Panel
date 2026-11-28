@@ -50,12 +50,7 @@ public class GatekeeperService {
         if (!StringUtils.hasText(key) || value == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "注解键和值不能为空");
         }
-        String version = version(token);
-        boolean known = resources(token, version).stream()
-                .anyMatch(item -> resource.equals(item.get("name")));
-        if (!known) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Gatekeeper 约束类型不存在");
-        }
+        String version = constraintVersion(token, resource);
         Map<String, Object> result = api.patchAnnotation(token, version, resource, name, key, value);
         if (result == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "Gatekeeper 约束不存在");
@@ -64,6 +59,27 @@ public class GatekeeperService {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
         return new GatekeeperAnnotationResponse(result, new Yaml(options).dumpAsMap(result));
+    }
+
+    public void deleteConstraint(String token, String resource, String name) {
+        if (!StringUtils.hasText(name)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "约束名称不能为空");
+        }
+        String version = constraintVersion(token, resource);
+        if (api.constraint(token, version, resource, name) == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "Gatekeeper 约束不存在");
+        }
+        api.deleteConstraint(token, version, resource, name);
+    }
+
+    private String constraintVersion(String token, String resource) {
+        String version = version(token);
+        boolean known = resources(token, version).stream()
+                .anyMatch(item -> resource.equals(item.get("name")));
+        if (!known) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "Gatekeeper 约束类型不存在");
+        }
+        return version;
     }
 
     private String version(String token) {

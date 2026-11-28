@@ -73,6 +73,16 @@ public class ClusterController {
                 body.key(), body.value()));
     }
 
+    @DeleteMapping("/gatekeeper/constraints/{resource}/{name}")
+    @Operation(summary = "下线指定 Gatekeeper 约束实例")
+    public BaseResponse<Boolean> deleteGatekeeperConstraint(
+            @PathVariable String resource, @PathVariable String name, HttpServletRequest request) {
+        User user = userService.getLoginUser(request);
+        ThrowUtils.throwIf(user == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        gatekeeperService.deleteConstraint(user.getIdToken(), resource, name);
+        return ResultUtils.success(true);
+    }
+
     @GetMapping("/roles")
     @Operation(summary = "查询 Role 列表，可按命名空间筛选")
     public BaseResponse<K8sListResponse<RbacResourceVO>> getRoles(
