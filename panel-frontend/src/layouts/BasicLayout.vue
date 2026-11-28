@@ -257,8 +257,13 @@ const handleLogout = () => {
   logoutConfirmOpen.value = true
 }
 
-const handleClick: MenuProps['onClick'] = (e) => {
-  router.push(e.key.toString())
+const handleClick: MenuProps['onClick'] = async (e) => {
+  try {
+    await router.push(e.key.toString())
+  } finally {
+    // 权限校验阻止跳转时，菜单仍应选中当前页面。
+    selectedKeys.value = [route.path]
+  }
 }
 
 function goToAuditAlerts() {

@@ -1,6 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import BasicLayout from '@/layouts/BasicLayout.vue'
 import { useAuthStore } from '@/stores/auth'
+import { createNamespace } from '@/api/clusterController'
+import { message } from 'ant-design-vue'
+
+const gatekeeperAccessYaml = `apiVersion: v1
+kind: Namespace
+metadata:
+  name: loa-test-level5
+`
+
+// 首次打开受限地址时回到首页，以便布局挂载并显示认证弹窗。
+const blockGatekeeperNavigation = () => router.currentRoute.value.name ? false : { name: 'home' }
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -99,12 +110,27 @@ const router = createRouter({
   ],
 })
 
-// 路由级登录守卫：未登录时放行导航（页面自身会做空态处理），但统一弹出登录对话框
-router.beforeEach(async () => {
+// 路由级登录守卫：Gatekeeper 页面需先完成 5 级准入检查，其余页面保留原有未登录空态行为。
+router.beforeEach(async (to) => {
   const authStore = useAuthStore()
   const loggedIn = await authStore.refreshLoginStatus()
   if (!loggedIn) {
     authStore.requestLoginDialog()
+    return to.name === 'gatekeeper' ? blockGatekeeperNavigation() : true
+  }
+  if (to.name === 'gatekeeper') {
+    try {
+      // 等待服务端 dry-run 的准入结果；Gatekeeper 拒绝时现有响应拦截器会弹出重新认证。
+      const response = await createNamespace({ yaml: gatekeeperAccessYaml }, { params: { dryRun: true } })
+      if (response.data.code !== 0) {
+        if (response.data.code === 40100) authStore.requestLoginDialog()
+        return blockGatekeeperNavigation()
+      }
+    } catch (error) {
+      console.error('Gatekeeper 页面权限校验失败:', error)
+      message.error('Gatekeeper 页面权限校验失败')
+      return blockGatekeeperNavigation()
+    }
   }
   return true
 })
